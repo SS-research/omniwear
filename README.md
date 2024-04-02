@@ -1,2 +1,3 @@
 # omniwear
-adaptive data exchange framework between smart wearables and smartphones
+
+adaptive data exchange and synchronization framework between smart wearables and smartphones
