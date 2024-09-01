@@ -28,3 +28,12 @@ open ios/Runner.xcworkspace
 <key>NSHealthShareUsageDescription</key>
 <string>Your app needs health sharing permissions to work.</string>
 ```
+
+### inertial
+
+#### Modify Info.plist for permissions for device's motion data
+
+```xml
+<key>NSMotionUsageDescription</key>
+<string>This app requires access to the barometer to provide altitude information.</string>
+```
