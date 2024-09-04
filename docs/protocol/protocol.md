@@ -44,7 +44,7 @@ The protocol described herein applies to the OmniWear application installed on s
     - [5.3.2 Databases Table](#532-databases-table)
     - [5.3.3 Sessions Table](#533-sessions-table)
     - [5.3.4 TS-Inertial Table](#534-ts-inertial-table)
-    - [5.3.5 TS-Inertial-ETL Table](#535-ts-inertial-etl-table)
+    - [5.3.5 TS-Inertial-ETL Table (deprecated)](#535-ts-inertial-etl-table-deprecated)
     - [5.3.6 TS-Health Table](#536-ts-health-table)
 - [6. Data Processing and Aggregation](#6-data-processing-and-aggregation)
   - [6.1 Inertial Data Aggregation](#61-inertial-data-aggregation)
@@ -115,10 +115,14 @@ The OmniWear protocol collects various types of data to provide comprehensive in
 
 ### 3.1.3 Inertial Time-Series
 - **Timestamp**: The time at which the data was recorded.
-- **Smartphone Accelerometer**: Acceleration data along the X, Y, and Z axes.
+- **Smartphone Accelerometer**: Gravity-corrected acceleration data along the X, Y, and Z axes.
 - **Smartphone Gyroscope**: Angular velocity data along the X, Y, and Z axes.
-- **Smartwatch Accelerometer**: Acceleration data along the X, Y, and Z axes.
+- **Smartphone Magnetometer**: Ambient magnetic field in microteslas along the X, Y, and Z axes.
+- **Smartphone Barometer**: Surrounding atmospheric pressure in hectopascals.
+- **Smartwatch Accelerometer**: Gravity-corrected acceleration data along the X, Y, and Z axes.
 - **Smartwatch Gyroscope**: Angular velocity data along the X, Y, and Z axes.
+- **Smartwatch Magnetometer**: Ambient magnetic field in microteslas along the X, Y, and Z axes.
+- **Smartwatch Barometer**: Surrounding atmospheric pressure in hectopascals.
 
 ### 3.1.4 Health Time-Series
 - **Active Energy Burned** (calories): Energy expended during physical activity.
@@ -161,7 +165,7 @@ inertial data will respect the following right-handed coordinate system:
 Health data is collected using the [health](https://pub.dev/packages/health) package, which queries health repositories such as Apple Health and Google Health Connect at specified intervals. This allows for the integration of health data from various sources into a unified dataset.
 
 ### 3.2.5 Database Config Collection
-The database configuration defines the parameters for data collection, including frequencies, intervals, and the specific health features to be tracked. This configuration ensures that data is collected in a consistent and structured manner.
+The database configuration defines the parameters for data collection, including frequencies, intervals, and the specific inertial and health features to be tracked. This configuration ensures that data is collected in a consistent and structured manner.
 
 ## 3.3 Data Acquisition Diagrams
 ```mermaid
@@ -220,59 +224,68 @@ The database schema is designed to store the collected data in a structured and 
 |   ID   |  int  | PK,auto-increment |
 
 ### 5.3.2 Databases Table
-|            Column             |  Type  |     Description      |
-| :---------------------------: | :----: | :------------------: |
-|              ID               |  int   | PK  , auto-increment |
-|          Start Date           |  date  |
-|           End Date            |  date  |
-| Inertial Collection Frequency | float  |
-|    Inertial Sleep Interval    | float  |
-| Inertial Collection Duration  | float  |
-|  Inertial Aggregation Window  | float  |
-|   Health Reading Frequency    | float  |
-|    Health Reading Interval    | float  |
-|        Health Features        | string |   Comma-separated    |
+|            Column             |  Type  |     Description      | Example |
+| :---------------------------: | :----: |:------------------: | :--:|
+|              ID               |  int   | PK  , auto-increment ||
+|          Start Date           |  date  || 2024-07-01
+|           End Date            |  date  || 2024-09-30
+| Inertial Collection Frequency | float  |Hz| 30
+|    Inertial Sleep Interval    | float  |seconds| 600
+| Inertial Collection Duration  | float  |seconds| 60
+|  Inertial Aggregation Window  | float  |seconds| 10
+|  Inertial Features  | string  | Comma-separated|acceloremeter,barometer
+|   Health Reading Frequency    | float  |seconds| 1800
+|    Health Reading Interval    | float  |seconds| 1800
+|        Health Features        | string |  Comma-separated    |active-energy-burned,heart-rate
 
 ### 5.3.3 Sessions Table
-|        Column         |   Type    |    Description     |
-| :-------------------: | :-------: | :----------------: |
+|        Column         |   Type    |    Description     | Example|
+| :-------------------: | :-------: | :----------------: |:--:|
 |          ID           |    int    | PK ,auto-increment |
 |      Database ID      |    int    |         FK         |
 |    Participant ID     |    int    |         FK         |
-|    Start Timestamp    | timestamp |
-|     End Timestamp     | timestamp |
-|   Smartphone Model    |  varchar  |
-| Smartphone OS Version |  varchar  |
-|   Smartwatch Model    |  varchar  |
-| Smartwatch OS Version |  varchar  |
+|    Start Timestamp    | timestamp || 2024-07-10 09:00:00
+|     End Timestamp     | timestamp || 2024-07-10 18:00:00
+|   Smartphone Model    |  varchar  || iPhone 16
+| Smartphone OS Version |  varchar  || iOS 17.0
+|   Smartwatch Model    |  varchar  || Apple Watch Ultra 2
+| Smartwatch OS Version |  varchar  || watchOS 10.0
 
 ### 5.3.4 TS-Inertial Table
 |       Column       |   Type    |     Description     |
 | :----------------: | :-------: | :-----------------: |
 |         ID         |    int    | PK ; auto-increment |
-|     Session ID     |    int    |     Foreign Key     |
+|     Session ID     |    int    |     FK     |
 |     Timestamp      | timestamp |
-| Smartphone Accel X |   float   |
-| Smartphone Accel Y |   float   |
-| Smartphone Accel Z |   float   |
-| Smartphone Gyro X  |   float   |
-| Smartphone Gyro Y  |   float   |
-| Smartphone Gyro Z  |   float   |
-| Smartwatch Accel X |   float   |
-| Smartwatch Accel Y |   float   |
-| Smartwatch Accel Z |   float   |
-| Smartwatch Gyro X  |   float   |
-| Smartwatch Gyro Y  |   float   |
-| Smartwatch Gyro Z  |   float   |
+| Smartphone Accelerometer X |   float   |
+| Smartphone Accelerometer Y |   float   |
+| Smartphone Accelerometer Z |   float   |
+| Smartphone Gyroscope X  |   float   |
+| Smartphone Gyroscope Y  |   float   |
+| Smartphone Gyroscope Z  |   float   |
+| Smartphone Magnometer X  |   float   |
+| Smartphone Magnometer Y  |   float   |
+| Smartphone Magnometer Z  |   float   |
+| Smartphone Barometer  |   float   |
+| Smartwatch Accelerometer X |   float   |
+| Smartwatch Accelerometer Y |   float   |
+| Smartwatch Accelerometer Z |   float   |
+| Smartwatch Gyroscope X  |   float   |
+| Smartwatch Gyroscope Y  |   float   |
+| Smartwatch Gyroscope Z  |   float   |
+| Smartwatch Magnometer X  |   float   |
+| Smartwatch Magnometer Y  |   float   |
+| Smartwatch Magnometer Z  |   float   |
+| Smartwatch Barometer  |   float   |
 
-### 5.3.5 TS-Inertial-ETL Table
+### 5.3.5 TS-Inertial-ETL Table (deprecated)
 
 if a non-zero inertial aggregation window was provided in the config, the raw inertial data will be aggregated into the following table: any movement feature should be intended on the Z-axis.
 
 |                   Column                   | Type  | Description |
 | :----------------------------------------: | :---: | :---------: |
 |                     ID                     |  int  |     PK      |
-|                 Session ID                 |  int  | Foreign Key |
+|                 Session ID                 |  int  | FK |
 |                 Timestamp                  | float |
 |          Smartphone Sway Area XY           | float |
 |          Smartphone Sway Area XZ           | float |
@@ -312,16 +325,15 @@ if a non-zero inertial aggregation window was provided in the config, the raw in
 |       Smartwatch Z Velocity Variance       | float |
 
 ### 5.3.6 TS-Health Table
-|     Column      |       Type        | Description |
-| :-------------: | :---------------: | :---------: |
+|     Column      |       Type        | Description | Example|
+| :-------------: | :---------------: | :---------: | :---: |
 |       ID        |        int        |     PK      |
-|   Session ID    |        int        | Foreign Key |
-| Start Timestamp |     timestamp     |
-|  End Timestamp  |     timestamp     |
-|    Category     |      varchar      |
-|      Type       |      varchar      |
-|     Manual      |       bool        |
-|      Value      | float/int/varchar |
+|   Session ID    |        int        | FK |
+| Start Timestamp |     timestamp     || 2024-07-10 09:30:00
+|  End Timestamp  |     timestamp     || 2024-07-10 09:35:00
+|    Category     |      varchar      || steps
+|       Unit      |       bool        || count
+|      Value      | float/int/varchar || 500
 
 <div class="page"/>
 
