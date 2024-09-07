@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:health/health.dart';
 import 'package:omniwear/services/health_data_service.dart';
 
 class HealthDataPage extends StatefulWidget {
@@ -8,11 +7,11 @@ class HealthDataPage extends StatefulWidget {
 }
 
 class _HealthDataPageState extends State<HealthDataPage> {
-  List<HealthDataPoint> _healthDataList = [];
+  List<HealthDataModel> _healthDataList = [];
   bool _permissionsGranted = false;
   bool _isFetching = false;
 
-  final HealthDataService _healthDataService = HealthDataService(); // Initialize service
+  final HealthDataService _healthDataService = HealthDataService();
 
   @override
   Widget build(BuildContext context) {
@@ -69,16 +68,17 @@ class _HealthDataPageState extends State<HealthDataPage> {
     });
 
     final healthData = await _healthDataService.fetchHealthData();
+
     setState(() {
       _healthDataList = healthData;
       _isFetching = false;
     });
   }
 
-  Widget _buildHealthDataTile(HealthDataPoint data) {
+  Widget _buildHealthDataTile(HealthDataModel data) {
     return ListTile(
-      title: Text(data.typeString),
-      subtitle: Text('Value: ${data.value}, Date: ${data.dateFrom}'),
+      title: Text(data.category),
+      subtitle: Text(data.toString()),
     );
   }
 }
