@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:health/health.dart';
 
 class InvalidHealthFeatureException implements Exception {
@@ -33,6 +34,7 @@ class HealthDataModel {
 class HealthDataService {
   final Health _health = Health();
   final List<HealthDataType> healthDataTypes;
+  Timer? _streamingTimer;
 
   HealthDataService({String? healthFeatures})
       : healthDataTypes = _parseHealthFeatures(healthFeatures);
@@ -97,12 +99,11 @@ class HealthDataService {
   // Fetch health data
   Future<List<HealthDataModel>> fetchHealthData({
     DateTime? endTime,
-    int intervalInSeconds = 1800,       // Default value of 1800 seconds (30 minutes)
+    int intervalInSeconds = 1800, // Default value of 1800 seconds (30 minutes)
   }) async {
-    final computedEndTime = endTime ??
-        DateTime.now(); // Use 'now' as default if endTime is not provided
-    final computedStartTime = computedEndTime.subtract(Duration(
-        seconds: intervalInSeconds)); // Compute startTime using the interval
+    final computedEndTime = endTime ?? DateTime.now(); // Use 'now' as default if endTime is not provided
+    final computedStartTime = computedEndTime.subtract(
+        Duration(seconds: intervalInSeconds)); // Compute startTime using the interval
 
     final healthDatas = await _health.getHealthDataFromTypes(
       types: healthDataTypes,
@@ -121,5 +122,29 @@ class HealthDataService {
     }).toList();
 
     return healthDataModels;
+  }
+
+  // Start streaming health data
+  void startStreaming({
+    required Function(List<HealthDataModel>) onData,
+    int healthReadingFrequency = 1800,   // Default fetch every 1800 seconds (30 minutes)
+    int healthReadingInterval = 1800,      // Default fetch for the last 1800 seconds (30 minutes)
+  }) {
+    // Stop any existing streaming
+    stopStreaming();
+
+    // Start a new timer for streaming
+    _streamingTimer = Timer.periodic(Duration(seconds: healthReadingFrequency),
+        (timer) async {
+      // Fetch health data and send it to the callback
+      final data = await fetchHealthData(intervalInSeconds: healthReadingInterval);
+      onData(data); // Call the callback with the fetched data
+    });
+  }
+
+  // Stop streaming health data
+  void stopStreaming() {
+    _streamingTimer?.cancel();
+    _streamingTimer = null;
   }
 }
