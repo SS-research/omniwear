@@ -30,18 +30,16 @@ class HealthDataModel {
   }
 }
 
+
 class HealthDataService {
   final Health _health = Health();
   final List<HealthDataType> healthDataTypes;
 
-  // Constructor with named parameters, defaulting to null for healthFeatures
-  // TODO: let also the possibility to use healthDataTypes list for omniwear as module pkg not app
   HealthDataService({String? healthFeatures})
       : healthDataTypes = _parseHealthFeatures(healthFeatures);
 
-  // Parse comma-separated health features into a list of HealthDataType
-  static List<HealthDataType> _parseHealthFeatures(String? healthFeatures) {
-    final featureMap = {
+  static Map<String, HealthDataType> _getFeatureMap() {
+    return {
       'ACTIVE_ENERGY_BURNED': HealthDataType.ACTIVE_ENERGY_BURNED,
       'BASAL_ENERGY_BURNED': HealthDataType.BASAL_ENERGY_BURNED,
       'BLOOD_GLUCOSE': HealthDataType.BLOOD_GLUCOSE,
@@ -62,8 +60,12 @@ class HealthDataService {
       'WATER': HealthDataType.WATER,
       'WORKOUT': HealthDataType.WORKOUT,
     };
+  }
 
-    // Check if healthFeatures is null
+  // Parse comma-separated health features into a list of HealthDataType
+  static List<HealthDataType> _parseHealthFeatures(String? healthFeatures) {
+    final featureMap = _getFeatureMap();
+
     if (healthFeatures == null || healthFeatures.isEmpty) {
       // Return all available health data types
       return featureMap.values.toList();
@@ -72,7 +74,6 @@ class HealthDataService {
     final featureStrings =
         healthFeatures.split(',').map((s) => s.trim()).toList();
 
-    // Map feature strings to HealthDataType, throw an exception if not found
     final List<HealthDataType> healthDataTypes = featureStrings.map((fs) {
       final type = featureMap[fs];
       if (type == null) {
