@@ -9,6 +9,7 @@ class InertialDataService {
 
   DateTime? _userAccelerometerUpdateTime;
   DateTime? _gyroscopeUpdateTime;
+  DateTime? _magnetometerUpdateTime;
   bool _isCollecting = false;
 
   InertialDataService({required this.sensorInterval});
@@ -55,6 +56,25 @@ class InertialDataService {
           _gyroscopeUpdateTime = now;
         },
         onError: (e) => onError('Gyroscope Sensor'),
+        cancelOnError: true,
+      ),
+    );
+
+    _streamSubscriptions.add(
+      magnetometerEventStream(samplingPeriod: sensorInterval).listen(
+        (MagnetometerEvent event) {
+          final now = DateTime.now();
+          if (_magnetometerUpdateTime != null) {
+            final interval = now.difference(_magnetometerUpdateTime!);
+            if (interval > _ignoreDuration) {
+              _recordData('Magnetometer', now, event.x, event.y, event.z, onDataUpdate);
+            }
+          } else {
+            _recordData('Magnetometer', now, event.x, event.y, event.z, onDataUpdate);
+          }
+          _magnetometerUpdateTime = now;
+        },
+        onError: (e) => onError('Magnetometer Sensor'),
         cancelOnError: true,
       ),
     );
