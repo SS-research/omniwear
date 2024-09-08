@@ -1,5 +1,14 @@
 import 'package:health/health.dart';
 
+class InvalidHealthFeatureException implements Exception {
+  final String feature;
+
+  InvalidHealthFeatureException(this.feature);
+
+  @override
+  String toString() => 'Invalid health feature: $feature';
+}
+
 class HealthDataModel {
   final DateTime startTimestamp;
   final DateTime endTimestamp;
@@ -23,14 +32,66 @@ class HealthDataModel {
 
 class HealthDataService {
   final Health _health = Health();
+  final List<HealthDataType> healthDataTypes;
+
+  // Constructor with named parameters, defaulting to null for healthFeatures
+  // TODO: let also the possibility to use healthDataTypes list for omniwear as module pkg not app
+  HealthDataService({String? healthFeatures})
+      : healthDataTypes = _parseHealthFeatures(healthFeatures);
+
+  // Parse comma-separated health features into a list of HealthDataType
+  static List<HealthDataType> _parseHealthFeatures(String? healthFeatures) {
+    final featureMap = {
+      'ACTIVE_ENERGY_BURNED': HealthDataType.ACTIVE_ENERGY_BURNED,
+      'BASAL_ENERGY_BURNED': HealthDataType.BASAL_ENERGY_BURNED,
+      'BLOOD_GLUCOSE': HealthDataType.BLOOD_GLUCOSE,
+      'BLOOD_OXYGEN': HealthDataType.BLOOD_OXYGEN,
+      'BLOOD_PRESSURE_DIASTOLIC': HealthDataType.BLOOD_PRESSURE_DIASTOLIC,
+      'BLOOD_PRESSURE_SYSTOLIC': HealthDataType.BLOOD_PRESSURE_SYSTOLIC,
+      'BODY_FAT_PERCENTAGE': HealthDataType.BODY_FAT_PERCENTAGE,
+      'BODY_MASS_INDEX': HealthDataType.BODY_MASS_INDEX,
+      'BODY_TEMPERATURE': HealthDataType.BODY_TEMPERATURE,
+      'HEART_RATE': HealthDataType.HEART_RATE,
+      'HEIGHT': HealthDataType.HEIGHT,
+      'RESTING_HEART_RATE': HealthDataType.RESTING_HEART_RATE,
+      'RESPIRATORY_RATE': HealthDataType.RESPIRATORY_RATE,
+      'STEPS': HealthDataType.STEPS,
+      'WEIGHT': HealthDataType.WEIGHT,
+      'SLEEP_ASLEEP': HealthDataType.SLEEP_ASLEEP,
+      'SLEEP_AWAKE': HealthDataType.SLEEP_AWAKE,
+      'WATER': HealthDataType.WATER,
+      'WORKOUT': HealthDataType.WORKOUT,
+    };
+
+    // Check if healthFeatures is null
+    if (healthFeatures == null || healthFeatures.isEmpty) {
+      // Return all available health data types
+      return featureMap.values.toList();
+    }
+
+    final featureStrings =
+        healthFeatures.split(',').map((s) => s.trim()).toList();
+
+    // Map feature strings to HealthDataType, throw an exception if not found
+    final List<HealthDataType> healthDataTypes = featureStrings.map((fs) {
+      final type = featureMap[fs];
+      if (type == null) {
+        // Throw custom exception for unrecognized feature strings
+        throw InvalidHealthFeatureException(fs);
+      }
+      return type;
+    }).toList();
+
+    return healthDataTypes;
+  }
 
   // Request permissions for accessing health data
   Future<bool> requestPermissions() async {
-    final types = _getHealthDataTypes();
     final permissions =
-        types.map((type) => HealthDataAccess.READ_WRITE).toList();
+        healthDataTypes.map((type) => HealthDataAccess.READ_WRITE).toList();
 
-    return await _health.requestAuthorization(types, permissions: permissions);
+    return await _health.requestAuthorization(healthDataTypes,
+        permissions: permissions);
   }
 
   // Fetch health data
@@ -39,7 +100,7 @@ class HealthDataService {
     final yesterday = now.subtract(const Duration(days: 1));
 
     final healthDatas = await _health.getHealthDataFromTypes(
-      types: _getHealthDataTypes(),
+      types: healthDataTypes,
       startTime: yesterday,
       endTime: now,
     );
@@ -54,30 +115,5 @@ class HealthDataService {
           value: dataPoint.value);
     }).toList();
     return healthDataModels;
-  }
-
-  // Get list of Health Data Types
-  List<HealthDataType> _getHealthDataTypes() {
-    return [
-      HealthDataType.ACTIVE_ENERGY_BURNED,
-      HealthDataType.BASAL_ENERGY_BURNED,
-      HealthDataType.BLOOD_GLUCOSE,
-      HealthDataType.BLOOD_OXYGEN,
-      HealthDataType.BLOOD_PRESSURE_DIASTOLIC,
-      HealthDataType.BLOOD_PRESSURE_SYSTOLIC,
-      HealthDataType.BODY_FAT_PERCENTAGE,
-      HealthDataType.BODY_MASS_INDEX,
-      HealthDataType.BODY_TEMPERATURE,
-      HealthDataType.HEART_RATE,
-      HealthDataType.HEIGHT,
-      HealthDataType.RESTING_HEART_RATE,
-      HealthDataType.RESPIRATORY_RATE,
-      HealthDataType.STEPS,
-      HealthDataType.WEIGHT,
-      HealthDataType.SLEEP_ASLEEP,
-      HealthDataType.SLEEP_AWAKE,
-      HealthDataType.WATER,
-      HealthDataType.WORKOUT,
-    ];
   }
 }

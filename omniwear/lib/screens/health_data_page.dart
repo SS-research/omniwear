@@ -19,32 +19,40 @@ class _HealthDataPageState extends State<HealthDataPage> {
       appBar: AppBar(
         title: const Text('Health Data'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: <Widget>[
-            ElevatedButton(
-              onPressed: _requestPermissions,
-              child: const Text('Request Permissions'),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _permissionsGranted ? _fetchHealthData : null,
-              child: const Text('Fetch Health Data'),
-            ),
-            const SizedBox(height: 16),
-            _isFetching
-                ? const Center(child: CircularProgressIndicator())
-                : Expanded(
-                    child: ListView.builder(
-                      itemCount: _healthDataList.length,
-                      itemBuilder: (context, index) {
-                        return _buildHealthDataTile(_healthDataList[index]);
-                      },
-                    ),
+      body: Column(
+        children: <Widget>[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 12)),
+                onPressed: _requestPermissions,
+                child: const Text('Request Permissions'),
+              ),
+              const SizedBox(width: 16),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 12)),
+                onPressed: _permissionsGranted ? _fetchHealthData : null,
+                child: const Text('Fetch Health Data'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _isFetching
+              ? const Center(child: CircularProgressIndicator())
+              : Expanded(
+                  child: ListView.builder(
+                    itemCount: _healthDataList.length,
+                    itemBuilder: (context, index) {
+                      return _buildHealthDataTile(_healthDataList[index]);
+                    },
                   ),
-          ],
-        ),
+                ),
+        ],
       ),
     );
   }
