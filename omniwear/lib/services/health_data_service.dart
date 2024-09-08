@@ -30,7 +30,6 @@ class HealthDataModel {
   }
 }
 
-
 class HealthDataService {
   final Health _health = Health();
   final List<HealthDataType> healthDataTypes;
@@ -96,14 +95,19 @@ class HealthDataService {
   }
 
   // Fetch health data
-  Future<List<HealthDataModel>> fetchHealthData() async {
-    final now = DateTime.now();
-    final yesterday = now.subtract(const Duration(days: 1));
+  Future<List<HealthDataModel>> fetchHealthData({
+    DateTime? endTime,
+    int intervalInSeconds = 1800,       // Default value of 1800 seconds (30 minutes)
+  }) async {
+    final computedEndTime = endTime ??
+        DateTime.now(); // Use 'now' as default if endTime is not provided
+    final computedStartTime = computedEndTime.subtract(Duration(
+        seconds: intervalInSeconds)); // Compute startTime using the interval
 
     final healthDatas = await _health.getHealthDataFromTypes(
       types: healthDataTypes,
-      startTime: yesterday,
-      endTime: now,
+      startTime: computedStartTime,
+      endTime: computedEndTime,
     );
 
     final healthDataModels = healthDatas.map((dataPoint) {
@@ -115,6 +119,7 @@ class HealthDataService {
           unit: dataPoint.unit.toString(),
           value: dataPoint.value);
     }).toList();
+
     return healthDataModels;
   }
 }
