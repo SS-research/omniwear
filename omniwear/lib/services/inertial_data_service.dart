@@ -17,16 +17,6 @@ class InertialDataService {
 
   bool get isCollecting => _isCollecting;
 
-  Stream<UserAccelerometerEvent> userAccelerometerEventStream({required Duration samplingPeriod}) async* {
-    await Future.delayed(samplingPeriod);
-    yield* userAccelerometerEvents;
-  }
-
-  Stream<GyroscopeEvent> gyroscopeEventStream({required Duration samplingPeriod}) async* {
-    await Future.delayed(samplingPeriod);
-    yield* gyroscopeEvents;
-  }
-
   void startCollecting(void Function(Map<String, dynamic>) onDataUpdate, void Function(String) onError) {
     _sensorData.clear();
     _isCollecting = true;
