@@ -1,35 +1,5 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:sensors_plus/sensors_plus.dart';
-
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations(
-    [
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ],
-  );
-
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Sensors Data Recorder',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorSchemeSeed: const Color(0x9f4376f8),
-      ),
-      home: const InertialDataPage(),
-    );
-  }
-}
+import 'package:omniwear/services/inertial_data_service.dart';
 
 class InertialDataPage extends StatefulWidget {
   const InertialDataPage({super.key});
@@ -39,14 +9,14 @@ class InertialDataPage extends StatefulWidget {
 }
 
 class _InertialDataPageState extends State<InertialDataPage> {
+  late InertialDataService _inertialDataService;
   final List<Map<String, dynamic>> _sensorData = [];
-  final _streamSubscriptions = <StreamSubscription<dynamic>>[];
-  final sensorInterval = const Duration(milliseconds: 100); // Sampling period
-  final Duration _ignoreDuration = const Duration(milliseconds: 50); // Minimum interval to record data
 
-  DateTime? _userAccelerometerUpdateTime;
-  DateTime? _gyroscopeUpdateTime;
-  bool _isCollecting = false;
+  @override
+  void initState() {
+    super.initState();
+    _inertialDataService = InertialDataService(sensorInterval: const Duration(milliseconds: 100));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +41,7 @@ class _InertialDataPageState extends State<InertialDataPage> {
             ],
           ),
           Expanded(
-            child: _isCollecting
+            child: _inertialDataService.isCollecting
                 ? const Center(child: CircularProgressIndicator())
                 : ListView.builder(
                     itemCount: _sensorData.length,
@@ -92,76 +62,18 @@ class _InertialDataPageState extends State<InertialDataPage> {
   void _startCollecting() {
     setState(() {
       _sensorData.clear();
-      _isCollecting = true;
     });
 
-    _streamSubscriptions.add(
-      userAccelerometerEventStream(samplingPeriod: sensorInterval).listen(
-        (UserAccelerometerEvent event) {
-          final now = DateTime.now();
-          setState(() {
-            if (_userAccelerometerUpdateTime != null) {
-              final interval = now.difference(_userAccelerometerUpdateTime!);
-              if (interval > _ignoreDuration) {
-                _recordData('UserAccelerometer', now, event.x, event.y, event.z);
-              }
-            } else {
-              _recordData('UserAccelerometer', now, event.x, event.y, event.z);
-            }
-          });
-          _userAccelerometerUpdateTime = now;
-        },
-        onError: (e) {
-          _showSensorErrorDialog('User Accelerometer Sensor');
-        },
-        cancelOnError: true,
-      ),
-    );
-
-    _streamSubscriptions.add(
-      gyroscopeEventStream(samplingPeriod: sensorInterval).listen(
-        (GyroscopeEvent event) {
-          final now = DateTime.now();
-          setState(() {
-            if (_gyroscopeUpdateTime != null) {
-              final interval = now.difference(_gyroscopeUpdateTime!);
-              if (interval > _ignoreDuration) {
-                _recordData('Gyroscope', now, event.x, event.y, event.z);
-              }
-            } else {
-              _recordData('Gyroscope', now, event.x, event.y, event.z);
-            }
-          });
-          _gyroscopeUpdateTime = now;
-        },
-        onError: (e) {
-          _showSensorErrorDialog('Gyroscope Sensor');
-        },
-        cancelOnError: true,
-      ),
-    );
+    _inertialDataService.startCollecting((data) {
+      setState(() {
+        _sensorData.add(data);
+      });
+    }, _showSensorErrorDialog);
   }
 
   void _stopCollecting() {
     setState(() {
-      _isCollecting = false;
-    });
-
-    for (final subscription in _streamSubscriptions) {
-      subscription.cancel();
-    }
-    _streamSubscriptions.clear();
-  }
-
-  void _recordData(String sensorType, DateTime timestamp, double x, double y, double z) {
-    setState(() {
-      _sensorData.add({
-        'timestamp': timestamp.toIso8601String(),
-        'sensorType': sensorType,
-        'x': x,
-        'y': y,
-        'z': z,
-      });
+      _inertialDataService.stopCollecting();
     });
   }
 
