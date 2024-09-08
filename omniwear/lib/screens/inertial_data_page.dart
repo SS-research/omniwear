@@ -15,7 +15,16 @@ class _InertialDataPageState extends State<InertialDataPage> {
   @override
   void initState() {
     super.initState();
-    _inertialDataService = InertialDataService(sensorInterval: const Duration(milliseconds: 100));
+    _inertialDataService = InertialDataService(
+      inertialCollectionFrequency: 10,
+      inertialCollectionDurationSeconds: 3,
+      inertialSleepDurationSeconds: 3,
+    );
+
+    // Add listener to update the UI when the state changes
+    _inertialDataService.isCollectingNotifier.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -41,18 +50,29 @@ class _InertialDataPageState extends State<InertialDataPage> {
             ],
           ),
           Expanded(
-            child: _inertialDataService.isCollecting
-                ? const Center(child: CircularProgressIndicator())
-                : ListView.builder(
+            child: ValueListenableBuilder<bool>(
+              valueListenable: _inertialDataService.isCollectingNotifier,
+              builder: (context, isCollecting, _) {
+                if (isCollecting) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                } else {
+                  return ListView.builder(
                     itemCount: _sensorData.length,
                     itemBuilder: (context, index) {
                       final data = _sensorData[index];
                       return ListTile(
-                        title: Text("${data['sensorType']} at ${data['timestamp']}"),
-                        subtitle: Text(' X: ${data['x']},\n Y: ${data['y']},\n Z: ${data['z']}'),
+                        title: Text(
+                            "${data['sensorType']} at ${data['timestamp']}"),
+                        subtitle: Text(
+                            'X: ${data['x']}, Y: ${data['y']}, Z: ${data['z']}'),
                       );
                     },
-                  ),
+                  );
+                }
+              },
+            ),
           ),
         ],
       ),
@@ -83,9 +103,26 @@ class _InertialDataPageState extends State<InertialDataPage> {
       builder: (context) {
         return AlertDialog(
           title: const Text("Sensor Not Found"),
-          content: Text("It seems that your device doesn't support $sensorName"),
+          content:
+              Text("It seems that your device doesn't support $sensorName"),
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    // Stop collecting data if still active
+    _inertialDataService.stopCollecting();
+
+    // Remove the listener from the ValueNotifier
+    _inertialDataService.isCollectingNotifier.removeListener(() {
+      setState(() {});
+    });
+
+    // Dispose of the service and other resources
+    _inertialDataService.dispose();
+
+    super.dispose();
   }
 }
