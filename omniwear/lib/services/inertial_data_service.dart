@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:sensors_plus/sensors_plus.dart';
+import 'package:rxdart/rxdart.dart';
+
 
 // Utility function to convert frequency to milliseconds
 int convertFrequencyToMilliseconds(double frequency) {
@@ -12,24 +14,30 @@ int convertFrequencyToMilliseconds(double frequency) {
 
 class InertialDataModel {
   final DateTime timestamp;
+  final DateTime smartphoneAccelerometerTimestamp;
   final double smartphoneAccelerometerX;
   final double smartphoneAccelerometerY;
   final double smartphoneAccelerometerZ;
+  final DateTime smartphoneGyroscopeTimestamp;
   final double smartphoneGyroscopeX;
   final double smartphoneGyroscopeY;
   final double smartphoneGyroscopeZ;
+  final DateTime smartphoneMagnometerTimestamp;
   final double smartphoneMagnometerX;
   final double smartphoneMagnometerY;
   final double smartphoneMagnometerZ;
 
   InertialDataModel({
     required this.timestamp,
+    required this.smartphoneAccelerometerTimestamp,
     required this.smartphoneAccelerometerX,
     required this.smartphoneAccelerometerY,
     required this.smartphoneAccelerometerZ,
+    required this.smartphoneGyroscopeTimestamp,
     required this.smartphoneGyroscopeX,
     required this.smartphoneGyroscopeY,
     required this.smartphoneGyroscopeZ,
+    required this.smartphoneMagnometerTimestamp,
     required this.smartphoneMagnometerX,
     required this.smartphoneMagnometerY,
     required this.smartphoneMagnometerZ,
@@ -40,18 +48,13 @@ const double defaultInertialCollectionFrequency = 10;
 const int defaultInertialCollectionDurationSeconds = 5;
 const int defaultInertialSleepDurationSeconds = 5;
 
+
 class InertialDataService {
-  final List<Map<String, dynamic>> _sensorData = [];
   final List<StreamSubscription<dynamic>> _streamSubscriptions = [];
   final double inertialCollectionFrequency;
   final Duration inertialCollectionDuration;
   final Duration inertialSleepDuration;
   late final Duration _sensorInterval;
-  final Duration _ignoreDuration = const Duration(milliseconds: 50);
-
-  DateTime? _userAccelerometerUpdateTime;
-  DateTime? _gyroscopeUpdateTime;
-  DateTime? _magnetometerUpdateTime;
 
   // Notifier to track collecting state
   final ValueNotifier<bool> isCollectingNotifier = ValueNotifier(false);
@@ -71,16 +74,16 @@ class InertialDataService {
         milliseconds: convertFrequencyToMilliseconds(inertialCollectionFrequency));
   }
 
-  void startCollecting(void Function(Map<String, dynamic>) onDataUpdate, void Function(String) onError) {
+  // Starts collecting sensor data
+  void startCollecting(void Function(InertialDataModel) onData, void Function(String) onError) {
     if (isCollectingNotifier.value) return;
 
-    _sensorData.clear();
     isCollectingNotifier.value = true;
 
-    _startSensors(onDataUpdate, onError);
+    _startSensors(onData, onError);
 
     _collectionTimer = Timer(inertialCollectionDuration, () {
-      _stopAndScheduleRestart(onDataUpdate, onError);
+      _stopAndScheduleRestart(onData, onError);
     });
   }
 
@@ -90,49 +93,52 @@ class InertialDataService {
     isCollectingNotifier.value = false;
   }
 
-  void _startSensors(void Function(Map<String, dynamic>) onDataUpdate, void Function(String) onError) {
-    _streamSubscriptions.add(
-      userAccelerometerEventStream(samplingPeriod: _sensorInterval).listen((UserAccelerometerEvent event) {
-        final now = DateTime.now();
-        if (_userAccelerometerUpdateTime == null ||
-            now.difference(_userAccelerometerUpdateTime!) > _ignoreDuration) {
-          _recordData('UserAccelerometer', now, event.x, event.y, event.z, onDataUpdate);
-          _userAccelerometerUpdateTime = now;
-        }
-      }, onError: (e) => onError('User Accelerometer Sensor'), cancelOnError: true),
-    );
+  void _startSensors(void Function(InertialDataModel) onData, void Function(String) onError) {
+    final accelerometerStream = userAccelerometerEventStream(samplingPeriod: _sensorInterval);
+    final gyroscopeStream = gyroscopeEventStream(samplingPeriod: _sensorInterval);
+    final magnetometerStream = magnetometerEventStream(samplingPeriod: _sensorInterval);
 
     _streamSubscriptions.add(
-      gyroscopeEventStream(samplingPeriod: _sensorInterval).listen((GyroscopeEvent event) {
-        final now = DateTime.now();
-        if (_gyroscopeUpdateTime == null ||
-            now.difference(_gyroscopeUpdateTime!) > _ignoreDuration) {
-          _recordData('Gyroscope', now, event.x, event.y, event.z, onDataUpdate);
-          _gyroscopeUpdateTime = now;
-        }
-      }, onError: (e) => onError('Gyroscope Sensor'), cancelOnError: true),
-    );
+      Rx.combineLatest3(
+        accelerometerStream,
+        gyroscopeStream,
+        magnetometerStream,
+        (UserAccelerometerEvent accEvent, GyroscopeEvent gyroEvent, MagnetometerEvent magEvent) {
+          final now = DateTime.now();
 
-    _streamSubscriptions.add(
-      magnetometerEventStream(samplingPeriod: _sensorInterval).listen((MagnetometerEvent event) {
-        final now = DateTime.now();
-        if (_magnetometerUpdateTime == null ||
-            now.difference(_magnetometerUpdateTime!) > _ignoreDuration) {
-          _recordData('Magnetometer', now, event.x, event.y, event.z, onDataUpdate);
-          _magnetometerUpdateTime = now;
-        }
-      }, onError: (e) => onError('Magnetometer Sensor'), cancelOnError: true),
+          // Create and return the InertialDataModel with aggregated data
+          return InertialDataModel(
+            timestamp: now,
+            smartphoneAccelerometerTimestamp: accEvent.timestamp,
+            smartphoneAccelerometerX: accEvent.x,
+            smartphoneAccelerometerY: accEvent.y,
+            smartphoneAccelerometerZ: accEvent.z,
+            smartphoneGyroscopeTimestamp: gyroEvent.timestamp,
+            smartphoneGyroscopeX: gyroEvent.x,
+            smartphoneGyroscopeY: gyroEvent.y,
+            smartphoneGyroscopeZ: gyroEvent.z,
+            smartphoneMagnometerTimestamp: magEvent.timestamp,
+            smartphoneMagnometerX: magEvent.x,
+            smartphoneMagnometerY: magEvent.y,
+            smartphoneMagnometerZ: magEvent.z,
+          );
+        },
+      ).listen((inertialData) {
+        // Call the onData function with the aggregated data
+        onData(inertialData);
+      }, onError: (e) {
+        // Handle any errors
+        onError('Sensor error: $e');
+      }),
     );
   }
 
-  void _stopAndScheduleRestart(
-      void Function(Map<String, dynamic>) onDataUpdate,
-      void Function(String) onError) {
+  void _stopAndScheduleRestart(void Function(InertialDataModel) onData, void Function(String) onError) {
     _stopSensors();
     isCollectingNotifier.value = false;
     _sleepTimer = Timer(inertialSleepDuration, () {
       if (!isCollectingNotifier.value) {
-        startCollecting(onDataUpdate, onError);
+        startCollecting(onData, onError);
       }
     });
   }
@@ -148,24 +154,6 @@ class InertialDataService {
   void _cancelTimers() {
     _collectionTimer?.cancel();
     _sleepTimer?.cancel();
-  }
-
-  void _recordData(
-      String sensorType,
-      DateTime timestamp,
-      double x,
-      double y,
-      double z,
-      void Function(Map<String, dynamic>) onDataUpdate) {
-    final data = {
-      'timestamp': timestamp.toIso8601String(),
-      'sensorType': sensorType,
-      'x': x,
-      'y': y,
-      'z': z,
-    };
-    _sensorData.add(data);
-    onDataUpdate(data);
   }
 
   void dispose() {

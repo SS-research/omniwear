@@ -10,7 +10,7 @@ class InertialDataPage extends StatefulWidget {
 
 class _InertialDataPageState extends State<InertialDataPage> {
   late InertialDataService _inertialDataService;
-  final List<Map<String, dynamic>> _sensorData = [];
+  final List<InertialDataModel> _inertialDataModels = [];
 
   @override
   void initState() {
@@ -25,6 +25,44 @@ class _InertialDataPageState extends State<InertialDataPage> {
     _inertialDataService.isCollectingNotifier.addListener(() {
       setState(() {});
     });
+  }
+
+  // Helper function to display sensor data
+  Widget _buildSensorDataWidget({
+    required String sensorName,
+    required DateTime timestamp,
+    required double x,
+    required double y,
+    required double z,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(sensorName, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text('Timestamp: ${timestamp.toIso8601String()}'),
+          Row(
+            children: [
+              const Text('X: ', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text('$x'),
+            ],
+          ),
+          Row(
+            children: [
+              const Text('Y: ', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text('$y'),
+            ],
+          ),
+          Row(
+            children: [
+              const Text('Z: ', style: TextStyle(fontWeight: FontWeight.bold)),
+              Text('$z'),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -59,14 +97,44 @@ class _InertialDataPageState extends State<InertialDataPage> {
                   );
                 } else {
                   return ListView.builder(
-                    itemCount: _sensorData.length,
+                    itemCount: _inertialDataModels.length,
                     itemBuilder: (context, index) {
-                      final data = _sensorData[index];
+                      final data = _inertialDataModels[index];
                       return ListTile(
-                        title: Text(
-                            "${data['sensorType']} at ${data['timestamp']}"),
-                        subtitle: Text(
-                            'X: ${data['x']}, Y: ${data['y']}, Z: ${data['z']}'),
+                        title: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Text(
+                            "Timestamp: ${data.timestamp.toIso8601String()}",
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildSensorDataWidget(
+                              sensorName: 'Accelerometer:',
+                              timestamp: data.smartphoneAccelerometerTimestamp,
+                              x: data.smartphoneAccelerometerX,
+                              y: data.smartphoneAccelerometerY,
+                              z: data.smartphoneAccelerometerZ,
+                            ),
+                            _buildSensorDataWidget(
+                              sensorName: 'Gyroscope:',
+                              timestamp: data.smartphoneGyroscopeTimestamp,
+                              x: data.smartphoneGyroscopeX,
+                              y: data.smartphoneGyroscopeY,
+                              z: data.smartphoneGyroscopeZ,
+                            ),
+                            _buildSensorDataWidget(
+                              sensorName: 'Magnetometer:',
+                              timestamp: data.smartphoneMagnometerTimestamp,
+                              x: data.smartphoneMagnometerX,
+                              y: data.smartphoneMagnometerY,
+                              z: data.smartphoneMagnometerZ,
+                            ),
+                          ],
+                        ),
                       );
                     },
                   );
@@ -81,12 +149,12 @@ class _InertialDataPageState extends State<InertialDataPage> {
 
   void _startCollecting() {
     setState(() {
-      _sensorData.clear();
+      _inertialDataModels.clear();
     });
 
     _inertialDataService.startCollecting((data) {
       setState(() {
-        _sensorData.add(data);
+        _inertialDataModels.add(data);
       });
     }, _showSensorErrorDialog);
   }
