@@ -70,7 +70,7 @@ class InertialDataService {
                     .instance.config.inertialCollectionDurationSeconds),
         inertialSleepDuration = Duration(
             seconds: inertialSleepDurationSeconds ??
-                ConfigManager.instance.config.inertialSleepDurationSeconds) {}
+                ConfigManager.instance.config.inertialSleepDurationSeconds);
 
   // Starts collecting sensor data
   void startCollecting(
