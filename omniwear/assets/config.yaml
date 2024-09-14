@@ -1,0 +1,8 @@
+inertialCollectionFrequency: 10
+inertialCollectionDurationSeconds: 5
+inertialSleepDurationSeconds: 5
+inertialFeatures: ""
+
+healthFeatures: "STEPS,ACTIVE_ENERGY_BURNED"
+healthReadingFrequency: 4
+healthReadingInterval: 1800000
