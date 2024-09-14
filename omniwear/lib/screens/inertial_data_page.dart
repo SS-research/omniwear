@@ -15,11 +15,7 @@ class _InertialDataPageState extends State<InertialDataPage> {
   @override
   void initState() {
     super.initState();
-    _inertialDataService = InertialDataService(
-      inertialCollectionFrequency: 10,
-      inertialCollectionDurationSeconds: 3,
-      inertialSleepDurationSeconds: 3,
-    );
+    _inertialDataService = InertialDataService();
 
     // Add listener to update the UI when the state changes
     _inertialDataService.isCollectingNotifier.addListener(() {

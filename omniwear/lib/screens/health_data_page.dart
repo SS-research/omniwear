@@ -2,11 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:omniwear/services/health_data_service.dart';
 
-const defaultHealthFeatures = "STEPS,ACTIVE_ENERGY_BURNED";
-const defaultHealthReadingFrequency = 1800;
-const defaultHealthReadingInterval = 1800;
-
-
 class HealthDataPage extends StatefulWidget {
   @override
   _HealthDataPageState createState() => _HealthDataPageState();
@@ -18,7 +13,7 @@ class _HealthDataPageState extends State<HealthDataPage> {
   bool _isFetching = false;
   bool _isStreaming = false;
 
-  final HealthDataService _healthDataService = HealthDataService(healthFeatures: defaultHealthFeatures);
+  final HealthDataService _healthDataService = HealthDataService();
 
   @override
   Widget build(BuildContext context) {
@@ -151,8 +146,6 @@ class _HealthDataPageState extends State<HealthDataPage> {
           });
         }
       },
-      healthReadingFrequency: defaultHealthReadingFrequency,
-      healthReadingInterval: defaultHealthReadingInterval,
     );
   }
 

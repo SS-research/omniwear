@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:omniwear/config/config_manager.dart';
 
 import 'screens/device_info_page.dart';
 import 'screens/health_data_page.dart';
 import 'screens/start_session_page.dart';
 import 'screens/inertial_data_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await ConfigManager.instance.loadConfig('assets/config.yaml');
+
   runApp(const MyApp());
 }
 

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:health/health.dart';
+import 'package:omniwear/config/config_manager.dart';
 
 class InvalidHealthFeatureException implements Exception {
   final String feature;
@@ -36,8 +37,21 @@ class HealthDataService {
   final List<HealthDataType> healthDataTypes;
   Timer? _streamingTimer;
 
-  HealthDataService({String? healthFeatures})
-      : healthDataTypes = _parseHealthFeatures(healthFeatures);
+  // Use config values or default to specified values
+  final int healthReadingFrequency;
+  final int healthReadingInterval;
+
+  // Constructor using values from ConfigManager or defaults
+  HealthDataService({
+    String? healthFeatures,
+    int? healthReadingFrequency,
+    int? healthReadingInterval,
+  })  : healthDataTypes = _parseHealthFeatures(
+            healthFeatures ?? ConfigManager.instance.config.healthFeatures),
+        healthReadingFrequency = healthReadingFrequency ??
+            ConfigManager.instance.config.healthReadingFrequency,
+        healthReadingInterval = healthReadingInterval ??
+            ConfigManager.instance.config.healthReadingInterval;
 
   static Map<String, HealthDataType> _getFeatureMap() {
     return {
@@ -63,12 +77,10 @@ class HealthDataService {
     };
   }
 
-  // Parse comma-separated health features into a list of HealthDataType
   static List<HealthDataType> _parseHealthFeatures(String? healthFeatures) {
     final featureMap = _getFeatureMap();
 
     if (healthFeatures == null || healthFeatures.isEmpty) {
-      // Return all available health data types
       return featureMap.values.toList();
     }
 
@@ -78,7 +90,6 @@ class HealthDataService {
     final List<HealthDataType> healthDataTypes = featureStrings.map((fs) {
       final type = featureMap[fs];
       if (type == null) {
-        // Throw custom exception for unrecognized feature strings
         throw InvalidHealthFeatureException(fs);
       }
       return type;
@@ -87,23 +98,20 @@ class HealthDataService {
     return healthDataTypes;
   }
 
-  // Request permissions for accessing health data
   Future<bool> requestPermissions() async {
     final permissions =
         healthDataTypes.map((type) => HealthDataAccess.READ_WRITE).toList();
-
     return await _health.requestAuthorization(healthDataTypes,
         permissions: permissions);
   }
 
-  // Fetch health data
   Future<List<HealthDataModel>> fetchHealthData({
     DateTime? endTime,
     int intervalInSeconds = 1800, // Default value of 1800 seconds (30 minutes)
   }) async {
-    final computedEndTime = endTime ?? DateTime.now(); // Use 'now' as default if endTime is not provided
-    final computedStartTime = computedEndTime.subtract(
-        Duration(seconds: intervalInSeconds)); // Compute startTime using the interval
+    final computedEndTime = endTime ?? DateTime.now();
+    final computedStartTime =
+        computedEndTime.subtract(Duration(seconds: intervalInSeconds));
 
     final healthDatas = await _health.getHealthDataFromTypes(
       types: healthDataTypes,
@@ -127,19 +135,17 @@ class HealthDataService {
   // Start streaming health data
   void startStreaming({
     required Function(List<HealthDataModel>) onData,
-    int healthReadingFrequency = 1800,   // Default fetch every 1800 seconds (30 minutes)
-    int healthReadingInterval = 1800,      // Default fetch for the last 1800 seconds (30 minutes)
   }) {
-    // Stop any existing streaming
-    stopStreaming();
+    stopStreaming(); // Stop any existing streaming
 
-    // Start a new timer for streaming
-    _streamingTimer = Timer.periodic(Duration(seconds: healthReadingFrequency),
-        (timer) async {
-      // Fetch health data and send it to the callback
-      final data = await fetchHealthData(intervalInSeconds: healthReadingInterval);
-      onData(data); // Call the callback with the fetched data
-    });
+    _streamingTimer = Timer.periodic(
+      Duration(seconds: healthReadingFrequency),
+      (timer) async {
+        final data =
+            await fetchHealthData(intervalInSeconds: healthReadingInterval);
+        onData(data);
+      },
+    );
   }
 
   // Stop streaming health data

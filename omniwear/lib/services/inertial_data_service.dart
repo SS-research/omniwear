@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:omniwear/config/config_manager.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:rxdart/rxdart.dart';
-
 
 // Utility function to convert frequency to milliseconds
 int convertFrequencyToMilliseconds(double frequency) {
@@ -44,14 +44,8 @@ class InertialDataModel {
   });
 }
 
-const double defaultInertialCollectionFrequency = 10;
-const int defaultInertialCollectionDurationSeconds = 5;
-const int defaultInertialSleepDurationSeconds = 5;
-
-
 class InertialDataService {
   final List<StreamSubscription<dynamic>> _streamSubscriptions = [];
-  final double inertialCollectionFrequency;
   final Duration inertialCollectionDuration;
   final Duration inertialSleepDuration;
   late final Duration _sensorInterval;
@@ -63,19 +57,24 @@ class InertialDataService {
   Timer? _sleepTimer;
 
   InertialDataService({
-    this.inertialCollectionFrequency = defaultInertialCollectionFrequency,
-    int inertialCollectionDurationSeconds = defaultInertialCollectionDurationSeconds,
-    int inertialSleepDurationSeconds = defaultInertialSleepDurationSeconds,
-  })  : inertialCollectionDuration =
-            Duration(seconds: inertialCollectionDurationSeconds),
-        inertialSleepDuration =
-            Duration(seconds: inertialSleepDurationSeconds) {
-    _sensorInterval = Duration(
-        milliseconds: convertFrequencyToMilliseconds(inertialCollectionFrequency));
-  }
+    double? inertialCollectionFrequency,
+    int? inertialCollectionDurationSeconds,
+    int? inertialSleepDurationSeconds,
+  })  : _sensorInterval = Duration(
+            milliseconds: convertFrequencyToMilliseconds(
+                inertialCollectionFrequency ??
+                    ConfigManager.instance.config.inertialCollectionFrequency)),
+        inertialCollectionDuration = Duration(
+            seconds: inertialCollectionDurationSeconds ??
+                ConfigManager
+                    .instance.config.inertialCollectionDurationSeconds),
+        inertialSleepDuration = Duration(
+            seconds: inertialSleepDurationSeconds ??
+                ConfigManager.instance.config.inertialSleepDurationSeconds) {}
 
   // Starts collecting sensor data
-  void startCollecting(void Function(InertialDataModel) onData, void Function(String) onError) {
+  void startCollecting(
+      void Function(InertialDataModel) onData, void Function(String) onError) {
     if (isCollectingNotifier.value) return;
 
     isCollectingNotifier.value = true;
@@ -93,17 +92,22 @@ class InertialDataService {
     isCollectingNotifier.value = false;
   }
 
-  void _startSensors(void Function(InertialDataModel) onData, void Function(String) onError) {
-    final accelerometerStream = userAccelerometerEventStream(samplingPeriod: _sensorInterval);
-    final gyroscopeStream = gyroscopeEventStream(samplingPeriod: _sensorInterval);
-    final magnetometerStream = magnetometerEventStream(samplingPeriod: _sensorInterval);
+  void _startSensors(
+      void Function(InertialDataModel) onData, void Function(String) onError) {
+    final accelerometerStream =
+        userAccelerometerEventStream(samplingPeriod: _sensorInterval);
+    final gyroscopeStream =
+        gyroscopeEventStream(samplingPeriod: _sensorInterval);
+    final magnetometerStream =
+        magnetometerEventStream(samplingPeriod: _sensorInterval);
 
     _streamSubscriptions.add(
       Rx.combineLatest3(
         accelerometerStream,
         gyroscopeStream,
         magnetometerStream,
-        (UserAccelerometerEvent accEvent, GyroscopeEvent gyroEvent, MagnetometerEvent magEvent) {
+        (UserAccelerometerEvent accEvent, GyroscopeEvent gyroEvent,
+            MagnetometerEvent magEvent) {
           final now = DateTime.now();
 
           // Create and return the InertialDataModel with aggregated data
@@ -133,7 +137,8 @@ class InertialDataService {
     );
   }
 
-  void _stopAndScheduleRestart(void Function(InertialDataModel) onData, void Function(String) onError) {
+  void _stopAndScheduleRestart(
+      void Function(InertialDataModel) onData, void Function(String) onError) {
     _stopSensors();
     isCollectingNotifier.value = false;
     _sleepTimer = Timer(inertialSleepDuration, () {
