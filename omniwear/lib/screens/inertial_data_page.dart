@@ -108,27 +108,31 @@ class _InertialDataPageState extends State<InertialDataPage> {
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildSensorDataWidget(
-                              sensorName: 'Accelerometer:',
-                              timestamp: data.smartphoneAccelerometerTimestamp,
-                              x: data.smartphoneAccelerometerX,
-                              y: data.smartphoneAccelerometerY,
-                              z: data.smartphoneAccelerometerZ,
-                            ),
-                            _buildSensorDataWidget(
-                              sensorName: 'Gyroscope:',
-                              timestamp: data.smartphoneGyroscopeTimestamp,
-                              x: data.smartphoneGyroscopeX,
-                              y: data.smartphoneGyroscopeY,
-                              z: data.smartphoneGyroscopeZ,
-                            ),
-                            _buildSensorDataWidget(
-                              sensorName: 'Magnetometer:',
-                              timestamp: data.smartphoneMagnometerTimestamp,
-                              x: data.smartphoneMagnometerX,
-                              y: data.smartphoneMagnometerY,
-                              z: data.smartphoneMagnometerZ,
-                            ),
+                            if (data.smartphoneAccelerometerTimestamp != null)
+                              _buildSensorDataWidget(
+                                sensorName: 'Accelerometer:',
+                                timestamp:
+                                    data.smartphoneAccelerometerTimestamp!,
+                                x: data.smartphoneAccelerometerX!,
+                                y: data.smartphoneAccelerometerY!,
+                                z: data.smartphoneAccelerometerZ!,
+                              ),
+                            if (data.smartphoneGyroscopeTimestamp != null)
+                              _buildSensorDataWidget(
+                                sensorName: 'Gyroscope:',
+                                timestamp: data.smartphoneGyroscopeTimestamp!,
+                                x: data.smartphoneGyroscopeX!,
+                                y: data.smartphoneGyroscopeY!,
+                                z: data.smartphoneGyroscopeZ!,
+                              ),
+                            if (data.smartphoneMagnometerTimestamp != null)
+                              _buildSensorDataWidget(
+                                sensorName: 'Magnetometer:',
+                                timestamp: data.smartphoneMagnometerTimestamp!,
+                                x: data.smartphoneMagnometerX!,
+                                y: data.smartphoneMagnometerY!,
+                                z: data.smartphoneMagnometerZ!,
+                              ),
                           ],
                         ),
                       );

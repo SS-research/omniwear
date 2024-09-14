@@ -12,35 +12,44 @@ int convertFrequencyToMilliseconds(double frequency) {
   return (1000 / frequency).round();
 }
 
+class InvalidInertialFeatureException implements Exception {
+  final String feature;
+
+  InvalidInertialFeatureException(this.feature);
+
+  @override
+  String toString() => 'Invalid inertial feature: $feature';
+}
+
 class InertialDataModel {
   final DateTime timestamp;
-  final DateTime smartphoneAccelerometerTimestamp;
-  final double smartphoneAccelerometerX;
-  final double smartphoneAccelerometerY;
-  final double smartphoneAccelerometerZ;
-  final DateTime smartphoneGyroscopeTimestamp;
-  final double smartphoneGyroscopeX;
-  final double smartphoneGyroscopeY;
-  final double smartphoneGyroscopeZ;
-  final DateTime smartphoneMagnometerTimestamp;
-  final double smartphoneMagnometerX;
-  final double smartphoneMagnometerY;
-  final double smartphoneMagnometerZ;
+  final DateTime? smartphoneAccelerometerTimestamp;
+  final double? smartphoneAccelerometerX;
+  final double? smartphoneAccelerometerY;
+  final double? smartphoneAccelerometerZ;
+  final DateTime? smartphoneGyroscopeTimestamp;
+  final double? smartphoneGyroscopeX;
+  final double? smartphoneGyroscopeY;
+  final double? smartphoneGyroscopeZ;
+  final DateTime? smartphoneMagnometerTimestamp;
+  final double? smartphoneMagnometerX;
+  final double? smartphoneMagnometerY;
+  final double? smartphoneMagnometerZ;
 
   InertialDataModel({
     required this.timestamp,
-    required this.smartphoneAccelerometerTimestamp,
-    required this.smartphoneAccelerometerX,
-    required this.smartphoneAccelerometerY,
-    required this.smartphoneAccelerometerZ,
-    required this.smartphoneGyroscopeTimestamp,
-    required this.smartphoneGyroscopeX,
-    required this.smartphoneGyroscopeY,
-    required this.smartphoneGyroscopeZ,
-    required this.smartphoneMagnometerTimestamp,
-    required this.smartphoneMagnometerX,
-    required this.smartphoneMagnometerY,
-    required this.smartphoneMagnometerZ,
+    this.smartphoneAccelerometerTimestamp,
+    this.smartphoneAccelerometerX,
+    this.smartphoneAccelerometerY,
+    this.smartphoneAccelerometerZ,
+    this.smartphoneGyroscopeTimestamp,
+    this.smartphoneGyroscopeX,
+    this.smartphoneGyroscopeY,
+    this.smartphoneGyroscopeZ,
+    this.smartphoneMagnometerTimestamp,
+    this.smartphoneMagnometerX,
+    this.smartphoneMagnometerY,
+    this.smartphoneMagnometerZ,
   });
 }
 
@@ -49,14 +58,15 @@ class InertialDataService {
   final Duration inertialCollectionDuration;
   final Duration inertialSleepDuration;
   late final Duration _sensorInterval;
+  final List<String> inertialFeatures;
 
-  // Notifier to track collecting state
   final ValueNotifier<bool> isCollectingNotifier = ValueNotifier(false);
 
   Timer? _collectionTimer;
   Timer? _sleepTimer;
 
   InertialDataService({
+    String? inertialFeatures,
     double? inertialCollectionFrequency,
     int? inertialCollectionDurationSeconds,
     int? inertialSleepDurationSeconds,
@@ -70,7 +80,28 @@ class InertialDataService {
                     .instance.config.inertialCollectionDurationSeconds),
         inertialSleepDuration = Duration(
             seconds: inertialSleepDurationSeconds ??
-                ConfigManager.instance.config.inertialSleepDurationSeconds);
+                ConfigManager.instance.config.inertialSleepDurationSeconds),
+        inertialFeatures = _parseInertialFeatures(
+            inertialFeatures ?? ConfigManager.instance.config.inertialFeatures);
+
+  static List<String> _parseInertialFeatures(String inertialFeatures) {
+    final validFeatures = ['accelerometer', 'gyroscope', 'magnetometer'];
+
+    if (inertialFeatures.isEmpty) {
+      return validFeatures;
+    }
+
+    final featureStrings =
+        inertialFeatures.split(',').map((s) => s.trim()).toList();
+
+    for (final feature in featureStrings) {
+      if (!validFeatures.contains(feature)) {
+        throw InvalidInertialFeatureException(feature);
+      }
+    }
+
+    return featureStrings;
+  }
 
   // Starts collecting sensor data
   void startCollecting(
@@ -94,37 +125,46 @@ class InertialDataService {
 
   void _startSensors(
       void Function(InertialDataModel) onData, void Function(String) onError) {
-    final accelerometerStream =
-        userAccelerometerEventStream(samplingPeriod: _sensorInterval);
-    final gyroscopeStream =
-        gyroscopeEventStream(samplingPeriod: _sensorInterval);
-    final magnetometerStream =
-        magnetometerEventStream(samplingPeriod: _sensorInterval);
+    Stream<UserAccelerometerEvent>? accelerometerStream;
+    Stream<GyroscopeEvent>? gyroscopeStream;
+    Stream<MagnetometerEvent>? magnetometerStream;
+
+    if (inertialFeatures.contains('accelerometer')) {
+      accelerometerStream =
+          userAccelerometerEventStream(samplingPeriod: _sensorInterval);
+    }
+    if (inertialFeatures.contains('gyroscope')) {
+      gyroscopeStream = gyroscopeEventStream(samplingPeriod: _sensorInterval);
+    }
+    if (inertialFeatures.contains('magnetometer')) {
+      magnetometerStream =
+          magnetometerEventStream(samplingPeriod: _sensorInterval);
+    }
 
     _streamSubscriptions.add(
       Rx.combineLatest3(
-        accelerometerStream,
-        gyroscopeStream,
-        magnetometerStream,
-        (UserAccelerometerEvent accEvent, GyroscopeEvent gyroEvent,
-            MagnetometerEvent magEvent) {
+        accelerometerStream ?? Stream.value(null),
+        gyroscopeStream ?? Stream.value(null),
+        magnetometerStream ?? Stream.value(null),
+        (UserAccelerometerEvent? accEvent, GyroscopeEvent? gyroEvent,
+            MagnetometerEvent? magEvent) {
           final now = DateTime.now();
 
-          // Create and return the InertialDataModel with aggregated data
+          // Create and return the InertialDataModel with only the available sensor data
           return InertialDataModel(
             timestamp: now,
-            smartphoneAccelerometerTimestamp: accEvent.timestamp,
-            smartphoneAccelerometerX: accEvent.x,
-            smartphoneAccelerometerY: accEvent.y,
-            smartphoneAccelerometerZ: accEvent.z,
-            smartphoneGyroscopeTimestamp: gyroEvent.timestamp,
-            smartphoneGyroscopeX: gyroEvent.x,
-            smartphoneGyroscopeY: gyroEvent.y,
-            smartphoneGyroscopeZ: gyroEvent.z,
-            smartphoneMagnometerTimestamp: magEvent.timestamp,
-            smartphoneMagnometerX: magEvent.x,
-            smartphoneMagnometerY: magEvent.y,
-            smartphoneMagnometerZ: magEvent.z,
+            smartphoneAccelerometerTimestamp: accEvent?.timestamp,
+            smartphoneAccelerometerX: accEvent?.x,
+            smartphoneAccelerometerY: accEvent?.y,
+            smartphoneAccelerometerZ: accEvent?.z,
+            smartphoneGyroscopeTimestamp: gyroEvent?.timestamp,
+            smartphoneGyroscopeX: gyroEvent?.x,
+            smartphoneGyroscopeY: gyroEvent?.y,
+            smartphoneGyroscopeZ: gyroEvent?.z,
+            smartphoneMagnometerTimestamp: magEvent?.timestamp,
+            smartphoneMagnometerX: magEvent?.x,
+            smartphoneMagnometerY: magEvent?.y,
+            smartphoneMagnometerZ: magEvent?.z,
           );
         },
       ).listen((inertialData) {
