@@ -109,7 +109,7 @@ class SessionService {
 
   Future<void> stopSession(DateTime endTimestamp) async {
     log("Stopping the session...");
-        _healthDataService.stopStreaming();
+    _healthDataService.stopStreaming();
     _inertialDataService.stopCollecting();
     _session = _session.copyWith(endTimestamp: endTimestamp.toIso8601String());
     _sessionRepository.update(_sessionID, _session);
