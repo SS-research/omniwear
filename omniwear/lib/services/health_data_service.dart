@@ -156,6 +156,10 @@ class HealthDataService {
   void startStreaming({
     required Function(List<HealthDataModel>) onData,
   }) {
+    if (_healthDataTypes.isEmpty) {
+      log("No health features available, streaming not started!");
+      return;
+    }
     stopStreaming(); // Stop any existing streaming
 
     _streamingTimer = Timer.periodic(
@@ -171,6 +175,10 @@ class HealthDataService {
 
   // Stop streaming health data
   void stopStreaming() {
+    if(_healthDataTypes.isEmpty) {
+      log("No health features available, streaming not stopped!");
+      return;
+    }
     _streamingTimer?.cancel();
     _streamingTimer = null;
   }
