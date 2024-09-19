@@ -35,23 +35,23 @@ class HealthDataModel {
 
 class HealthDataService {
   final Health _health = Health();
-  final List<HealthDataType> healthDataTypes;
+  final List<HealthDataType> _healthDataTypes;
   Timer? _streamingTimer;
 
   // Use config values or default to specified values
-  final int healthReadingFrequency;
-  final int healthReadingInterval;
+  final int _healthReadingFrequency;
+  final int _healthReadingInterval;
 
   // Constructor using values from ConfigManager or defaults
   HealthDataService({
     String? healthFeatures,
     int? healthReadingFrequency,
     int? healthReadingInterval,
-  })  : healthDataTypes = _parseHealthFeatures(
+  })  : _healthDataTypes = _parseHealthFeatures(
             healthFeatures ?? ConfigManager.instance.config.healthFeatures),
-        healthReadingFrequency = healthReadingFrequency ??
+        _healthReadingFrequency = healthReadingFrequency ??
             ConfigManager.instance.config.healthReadingFrequency,
-        healthReadingInterval = healthReadingInterval ??
+        _healthReadingInterval = healthReadingInterval ??
             ConfigManager.instance.config.healthReadingInterval;
 
   static Map<String, HealthDataType> _getFeatureMap() {
@@ -82,6 +82,10 @@ class HealthDataService {
     final featureMap = _getFeatureMap();
 
     if (healthFeatures == null || healthFeatures.isEmpty) {
+      return [];
+    }
+
+    if (healthFeatures == "*") {
       return featureMap.values.toList();
     }
 
@@ -99,10 +103,22 @@ class HealthDataService {
     return healthDataTypes;
   }
 
+  /// Requests authorization for health data access.
+  ///
+  /// This method attempts to request read/write permissions for all specified
+  /// health data types. If no health data types are provided, it returns true
+  /// without attempting any permission requests.
+  ///
+  /// @return [Future<bool>] - True if successful (no data types provided or
+  ///                          authorization was granted), false otherwise.
   Future<bool> requestPermissions() async {
+    // For the edge case where no dat
+    if (_healthDataTypes.isEmpty) {
+      return true;
+    }
     final permissions =
-        healthDataTypes.map((type) => HealthDataAccess.READ_WRITE).toList();
-    return await _health.requestAuthorization(healthDataTypes,
+        _healthDataTypes.map((type) => HealthDataAccess.READ_WRITE).toList();
+    return await _health.requestAuthorization(_healthDataTypes,
         permissions: permissions);
   }
 
@@ -110,12 +126,15 @@ class HealthDataService {
     DateTime? endTime,
     int intervalInSeconds = 1800, // Default value of 1800 seconds (30 minutes)
   }) async {
+    if (_healthDataTypes.isEmpty) {
+      return [];
+    }
     final computedEndTime = endTime ?? DateTime.now();
     final computedStartTime =
         computedEndTime.subtract(Duration(seconds: intervalInSeconds));
 
     final healthDatas = await _health.getHealthDataFromTypes(
-      types: healthDataTypes,
+      types: _healthDataTypes,
       startTime: computedStartTime,
       endTime: computedEndTime,
     );
@@ -137,13 +156,17 @@ class HealthDataService {
   void startStreaming({
     required Function(List<HealthDataModel>) onData,
   }) {
+    if (_healthDataTypes.isEmpty) {
+      log("No health features selected, streaming not started!");
+      return;
+    }
     stopStreaming(); // Stop any existing streaming
 
     _streamingTimer = Timer.periodic(
-      Duration(seconds: healthReadingFrequency),
+      Duration(seconds: _healthReadingFrequency),
       (timer) async {
         final data =
-            await fetchHealthData(intervalInSeconds: healthReadingInterval);
+            await fetchHealthData(intervalInSeconds: _healthReadingInterval);
         log("Health data received: ${data.length} data points", level: 0);
         onData(data);
       },
@@ -152,6 +175,10 @@ class HealthDataService {
 
   // Stop streaming health data
   void stopStreaming() {
+    if(_healthDataTypes.isEmpty) {
+      log("No health features selected, streaming not stopped!");
+      return;
+    }
     _streamingTimer?.cancel();
     _streamingTimer = null;
   }

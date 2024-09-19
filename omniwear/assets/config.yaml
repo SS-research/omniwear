@@ -3,6 +3,6 @@ inertialCollectionDurationSeconds: 5
 inertialSleepDurationSeconds: 5
 inertialFeatures: "accelerometer,gyroscope"
 
-healthFeatures: "STEPS,ACTIVE_ENERGY_BURNED"
+healthFeatures: "*"
 healthReadingFrequency: 4
 healthReadingInterval: 1800000
