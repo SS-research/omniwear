@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:health/health.dart';
 import 'package:omniwear/config/config_manager.dart';
 
@@ -143,6 +144,7 @@ class HealthDataService {
       (timer) async {
         final data =
             await fetchHealthData(intervalInSeconds: healthReadingInterval);
+        log("Health data received: ${data.length} data points", level: 0);
         onData(data);
       },
     );

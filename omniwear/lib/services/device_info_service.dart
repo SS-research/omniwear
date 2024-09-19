@@ -204,33 +204,45 @@ const _map = {
 
 String? lookup(String machineId) => _map[machineId];
 
+class DeviceInfoModel {
+  final String smartphoneModel;
+  final String smartphoneOsVersion;
+
+  DeviceInfoModel({
+    required this.smartphoneModel,
+    required this.smartphoneOsVersion,
+  });
+}
 
 class DeviceInfoService {
   final DeviceInfoPlugin _deviceInfoPlugin = DeviceInfoPlugin();
 
-  Future<Map<String, dynamic>> fetchDeviceInfo() async {
+  Future<DeviceInfoModel> fetchDeviceInfo() async {
     try {
-      return switch (defaultTargetPlatform) {
-        TargetPlatform.android => _readAndroidBuildData(await _deviceInfoPlugin.androidInfo),
-        TargetPlatform.iOS => _readIosDeviceInfo(await _deviceInfoPlugin.iosInfo),
-        _ => {'Error:': 'Unsupported platform'},
-      };
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        return _readAndroidBuildData(await _deviceInfoPlugin.androidInfo);
+      } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+        return _readIosDeviceInfo(await _deviceInfoPlugin.iosInfo);
+      } else {
+        throw UnsupportedError('Unsupported platform');
+      }
     } on PlatformException {
-      return {'Error:': 'Failed to get platform version.'};
+      throw PlatformException(
+          code: 'PLATFORM_ERROR', message: 'Failed to get platform version.');
     }
   }
 
-  Map<String, dynamic> _readAndroidBuildData(AndroidDeviceInfo build) {
-    return {
-      'Smartphone Model': build.model,
-      'Smartphone OS Version': build.version.release,
-    };
+  DeviceInfoModel _readAndroidBuildData(AndroidDeviceInfo build) {
+    return DeviceInfoModel(
+      smartphoneModel: build.model,
+      smartphoneOsVersion: build.version.release,
+    );
   }
 
-  Map<String, dynamic> _readIosDeviceInfo(IosDeviceInfo data) {
-    return {
-      'Smartphone Model': lookup(data.utsname.machine),
-      'Smartphone OS Version': data.systemVersion,
-    };
+  DeviceInfoModel _readIosDeviceInfo(IosDeviceInfo data) {
+    return DeviceInfoModel(
+      smartphoneModel: lookup(data.utsname.machine)!,
+      smartphoneOsVersion: data.systemVersion,
+    );
   }
 }

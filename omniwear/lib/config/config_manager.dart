@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:omniwear/config/config.dart';
 
 class ConfigManager {
@@ -9,6 +11,7 @@ class ConfigManager {
   static ConfigManager get instance => _instance;
 
   Future<void> loadConfig(String path) async {
+    log("Loading config...");
     _config = await Config.loadFromPath(path);
   }
 
