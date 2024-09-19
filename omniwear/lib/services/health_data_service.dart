@@ -157,7 +157,7 @@ class HealthDataService {
     required Function(List<HealthDataModel>) onData,
   }) {
     if (_healthDataTypes.isEmpty) {
-      log("No health features available, streaming not started!");
+      log("No health features selected, streaming not started!");
       return;
     }
     stopStreaming(); // Stop any existing streaming
@@ -176,7 +176,7 @@ class HealthDataService {
   // Stop streaming health data
   void stopStreaming() {
     if(_healthDataTypes.isEmpty) {
-      log("No health features available, streaming not stopped!");
+      log("No health features selected, streaming not stopped!");
       return;
     }
     _streamingTimer?.cancel();
