@@ -82,13 +82,16 @@ class InertialDataService {
         _inertialSleepDuration = Duration(
             seconds: inertialSleepDurationSeconds ??
                 ConfigManager.instance.config.inertialSleepDurationSeconds),
-        _inertialFeatures = _parseInertialFeatures(
-            inertialFeatures ?? ConfigManager.instance.config.inertialFeatures);
+        _inertialFeatures = _parseInertialFeatures(inertialFeatures ?? ConfigManager.instance.config.inertialFeatures);
 
-  static List<String> _parseInertialFeatures(String inertialFeatures) {
+  static List<String> _parseInertialFeatures(String? inertialFeatures) {
     final validFeatures = ['accelerometer', 'gyroscope', 'magnetometer'];
 
-    if (inertialFeatures.isEmpty) {
+    if (inertialFeatures == null || inertialFeatures.isEmpty) {
+      return [];
+    }
+
+    if (inertialFeatures == "*") {
       return validFeatures;
     }
 
@@ -107,6 +110,10 @@ class InertialDataService {
   // Starts collecting sensor data
   void startCollecting(
       void Function(InertialDataModel) onData, void Function(String) onError) {
+    if (_inertialFeatures.isEmpty) {
+      log("No inertial features selected, streaming not started");
+      return;
+    }
     if (isCollectingNotifier.value) return;
 
     isCollectingNotifier.value = true;
@@ -119,6 +126,10 @@ class InertialDataService {
   }
 
   void stopCollecting() {
+    if(_inertialFeatures.isEmpty) {
+      log("No inertial features selected, streaming not stopped!");
+      return;
+    }
     _stopSensors();
     _cancelTimers();
     isCollectingNotifier.value = false;
