@@ -35,23 +35,23 @@ class HealthDataModel {
 
 class HealthDataService {
   final Health _health = Health();
-  final List<HealthDataType> healthDataTypes;
+  final List<HealthDataType> _healthDataTypes;
   Timer? _streamingTimer;
 
   // Use config values or default to specified values
-  final int healthReadingFrequency;
-  final int healthReadingInterval;
+  final int _healthReadingFrequency;
+  final int _healthReadingInterval;
 
   // Constructor using values from ConfigManager or defaults
   HealthDataService({
     String? healthFeatures,
     int? healthReadingFrequency,
     int? healthReadingInterval,
-  })  : healthDataTypes = _parseHealthFeatures(
+  })  : _healthDataTypes = _parseHealthFeatures(
             healthFeatures ?? ConfigManager.instance.config.healthFeatures),
-        healthReadingFrequency = healthReadingFrequency ??
+        _healthReadingFrequency = healthReadingFrequency ??
             ConfigManager.instance.config.healthReadingFrequency,
-        healthReadingInterval = healthReadingInterval ??
+        _healthReadingInterval = healthReadingInterval ??
             ConfigManager.instance.config.healthReadingInterval;
 
   static Map<String, HealthDataType> _getFeatureMap() {
@@ -101,8 +101,8 @@ class HealthDataService {
 
   Future<bool> requestPermissions() async {
     final permissions =
-        healthDataTypes.map((type) => HealthDataAccess.READ_WRITE).toList();
-    return await _health.requestAuthorization(healthDataTypes,
+        _healthDataTypes.map((type) => HealthDataAccess.READ_WRITE).toList();
+    return await _health.requestAuthorization(_healthDataTypes,
         permissions: permissions);
   }
 
@@ -115,7 +115,7 @@ class HealthDataService {
         computedEndTime.subtract(Duration(seconds: intervalInSeconds));
 
     final healthDatas = await _health.getHealthDataFromTypes(
-      types: healthDataTypes,
+      types: _healthDataTypes,
       startTime: computedStartTime,
       endTime: computedEndTime,
     );
@@ -140,10 +140,10 @@ class HealthDataService {
     stopStreaming(); // Stop any existing streaming
 
     _streamingTimer = Timer.periodic(
-      Duration(seconds: healthReadingFrequency),
+      Duration(seconds: _healthReadingFrequency),
       (timer) async {
         final data =
-            await fetchHealthData(intervalInSeconds: healthReadingInterval);
+            await fetchHealthData(intervalInSeconds: _healthReadingInterval);
         log("Health data received: ${data.length} data points", level: 0);
         onData(data);
       },
