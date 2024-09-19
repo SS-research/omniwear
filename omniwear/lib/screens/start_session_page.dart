@@ -67,9 +67,6 @@ class _StartSessionPageState extends State<StartSessionPage> {
   void dispose() {
     final endTimestamp = DateTime.now();
     _sessionService.stopSession(endTimestamp);
-    setState(() {
-      _isSessionActive = false;
-    });
     super.dispose();
   }
 }
