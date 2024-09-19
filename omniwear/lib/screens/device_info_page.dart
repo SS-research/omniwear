@@ -8,8 +8,32 @@ class DeviceInfoPage extends StatefulWidget {
 
 class _DeviceInfoPageState extends State<DeviceInfoPage> {
   final DeviceInfoService _deviceInfoService = DeviceInfoService();
-  Map<String, dynamic> _deviceData = {};
-  bool _isFetching = false;
+  DeviceInfoModel? _deviceData;
+  bool _isFetching = true; // Start as true to show loading indicator initially
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDeviceInfo();
+  }
+
+  Future<void> _fetchDeviceInfo() async {
+    try {
+      final deviceData = await _deviceInfoService.fetchDeviceInfo();
+      if (!mounted) return;
+      setState(() {
+        _deviceData = deviceData;
+        _isFetching = false;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = 'Device information not available';
+        _isFetching = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,60 +45,64 @@ class _DeviceInfoPageState extends State<DeviceInfoPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: <Widget>[
-            ElevatedButton(
-              onPressed: _fetchDeviceInfo,
-              child: const Text('Fetch Device Info'),
-            ),
-            const SizedBox(height: 16),
             _isFetching
                 ? const Center(child: CircularProgressIndicator())
-                : Expanded(
-                    child: ListView(
-                      children: _deviceData.keys.map((String property) {
-                        return Row(
-                          children: <Widget>[
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              child: Text(
-                                property,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 10),
-                                child: Text(
-                                  '${_deviceData[property]}',
-                                  maxLines: 10,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      }).toList(),
-                    ),
-                  ),
+                : _errorMessage != null
+                    ? Center(
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red,
+                          ),
+                        ),
+                      )
+                    : Expanded(child: buildDeviceInfo(_deviceData)),
           ],
         ),
       ),
     );
   }
 
-  void _fetchDeviceInfo() async {
-    setState(() {
-      _isFetching = true;
-    });
-
-    final deviceData = await _deviceInfoService.fetchDeviceInfo();
-
-    if (!mounted) return;
-
-    setState(() {
-      _deviceData = deviceData;
-      _isFetching = false;
-    });
+  Widget buildDeviceInfo(DeviceInfoModel? deviceData) {
+    if (deviceData == null) {
+      return const Center(
+        child: Text(
+          'Device info not available',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              const Text(
+                'Model:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text(deviceData.smartphoneModel),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              const Text(
+                'OS Version:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text(deviceData.smartphoneOsVersion),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }

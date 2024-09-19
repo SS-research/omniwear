@@ -69,7 +69,7 @@ class MyHomePage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => _navigateToPage(context, InertialDataPage()),
+              onPressed: () => _navigateToPage(context, const InertialDataPage()),
               child: const Text('Inertial Data'),
             ),
           ],

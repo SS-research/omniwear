@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:omniwear/config/config_manager.dart';
 import 'package:sensors_plus/sensors_plus.dart';
@@ -169,6 +170,7 @@ class InertialDataService {
         },
       ).listen((inertialData) {
         // Call the onData function with the aggregated data
+        log("Inertial data received...");
         onData(inertialData);
       }, onError: (e) {
         // Handle any errors
