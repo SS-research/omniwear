@@ -28,7 +28,7 @@ The protocol described herein applies to the OmniWear application installed on s
     - [3.2.2 Device Attributes](#322-device-attributes)
     - [3.2.3 Inertial Data Collection](#323-inertial-data-collection)
     - [3.2.4 Health Data Collection](#324-health-data-collection)
-    - [3.2.5 Database Config Collection](#325-database-config-collection)
+    - [3.2.5 Dataset Config Collection](#325-dataset-config-collection)
   - [3.3 Data Acquisition Diagrams](#33-data-acquisition-diagrams)
 - [4. Data Transmission](#4-data-transmission)
   - [4.1 Connectivity](#41-connectivity)
@@ -165,8 +165,8 @@ inertial data will respect the following right-handed coordinate system:
 ### 3.2.4 Health Data Collection
 Health data is collected using the [health](https://pub.dev/packages/health) package, which queries health repositories such as Apple Health and Google Health Connect at specified intervals. This allows for the integration of health data from various sources into a unified dataset.
 
-### 3.2.5 Database Config Collection
-The database configuration defines the parameters for data collection, including frequencies, intervals, and the specific inertial and health features to be tracked. This configuration ensures that data is collected in a consistent and structured manner.
+### 3.2.5 Dataset Config Collection
+The dataset configuration defines the parameters for data collection, including frequencies, intervals, and the specific inertial and health features to be tracked. This configuration ensures that data is collected in a consistent and structured manner.
 
 ## 3.3 Data Acquisition Diagrams
 ```mermaid
@@ -243,7 +243,7 @@ The database schema is designed to store the collected data in a structured and 
 |        Column         |   Type    |    Description     | Example|
 | :-------------------: | :-------: | :----------------: |:--:|
 |          ID           |    int    | PK ,auto-increment |
-|      Database ID      |    int    |         FK         |
+|      Dataset ID      |    int    |         FK         |
 |    Participant ID     |    int    |         FK         |
 |    Start Timestamp    | timestamp || 2024-07-10 09:00:00
 |     End Timestamp     | timestamp || 2024-07-10 18:00:00
