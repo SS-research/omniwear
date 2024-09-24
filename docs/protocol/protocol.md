@@ -41,11 +41,12 @@ The protocol described herein applies to the OmniWear application installed on s
   - [5.2 Remote SQL Database Storage](#52-remote-sql-database-storage)
   - [5.3 Database Schema](#53-database-schema)
     - [5.3.1 Participants Table](#531-participants-table)
-    - [5.3.2 Databases Table](#532-databases-table)
+    - [5.3.2 Datasets Table](#532-datasets-table)
     - [5.3.3 Sessions Table](#533-sessions-table)
     - [5.3.4 TS-Inertial Table](#534-ts-inertial-table)
     - [5.3.5 TS-Inertial-ETL Table (deprecated)](#535-ts-inertial-etl-table-deprecated)
     - [5.3.6 TS-Health Table](#536-ts-health-table)
+    - [5.3.7 features coding config](#537-features-coding-config)
 - [6. Data Processing and Aggregation](#6-data-processing-and-aggregation)
   - [6.1 Inertial Data Aggregation](#61-inertial-data-aggregation)
   - [6.2 Health Data Aggregation](#62-health-data-aggregation)
@@ -223,7 +224,7 @@ The database schema is designed to store the collected data in a structured and 
 | :----: | :---: | :---------------: |
 |   ID   |  int  | PK,auto-increment |
 
-### 5.3.2 Databases Table
+### 5.3.2 Datasets Table
 |            Column             |  Type  |     Description      | Example |
 | :---------------------------: | :----: |:------------------: | :--:|
 |              ID               |  int   | PK  , auto-increment ||
@@ -332,8 +333,17 @@ if a non-zero inertial aggregation window was provided in the config, the raw in
 | Start Timestamp |     timestamp     || 2024-07-10 09:30:00
 |  End Timestamp  |     timestamp     || 2024-07-10 09:35:00
 |    Category     |      varchar      || steps
-|       Unit      |       bool        || count
+|       Unit      |       varchar        || count
 |      Value      | float/int/varchar || 500
+
+### 5.3.7 features coding config
+
+health and inertial features in the [Datasets Table](#532-datasets-table) follow a specific coding config logic that gives users the desired flexibility to select which features to track in the dataset:
+- empty string ("") or null mean that modality is disabled and should not be collected;
+- a star "*" means all features of that modality should be collected;
+- a comma-separated string (e.g., "accelerometer,gyroscope" for inertial features, "STEPS,ACTIVE_ENERGY_BURNED" for health features) means that modality is enabled, but only the specified features should be collected, while the rest ignored.
+
+The chosen features config will reflect in the TS-* tables schema.
 
 <div class="page"/>
 
