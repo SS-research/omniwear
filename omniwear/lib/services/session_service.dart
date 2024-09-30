@@ -58,17 +58,26 @@ class SessionService {
     final startDuration = startTimestamp.difference(DateTime.now());
     Timer(startDuration, () {
       log("Starting a new session...");
-      _healthDataService.startStreaming(onData: (healthDataModels) {
-        for (var healthDataModel in healthDataModels) {
-          _tsHealthRepository.insert(TSHealth(
-            tsHealthId: uuid.v4(),
-            sessionId: _sessionID,
-            startTimestamp: healthDataModel.startTimestamp.toIso8601String(),
-            endTimestamp: healthDataModel.endTimestamp.toIso8601String(),
-            category: healthDataModel.category,
-            unit: healthDataModel.unit,
-            value: healthDataModel.value.toString(),
-          ));
+      _healthDataService.startStreaming(onData: (healthDataModels) async {
+        List<TSHealth> tsHealthList = healthDataModels
+            .map((healthDataModel) => TSHealth(
+                  tsHealthId: uuid.v4(),
+                  sessionId: _sessionID,
+                  startTimestamp:
+                      healthDataModel.startTimestamp.toIso8601String(),
+                  endTimestamp: healthDataModel.endTimestamp.toIso8601String(),
+                  category: healthDataModel.category,
+                  unit: healthDataModel.unit,
+                  value: healthDataModel.value.toString(),
+                ))
+            .toList();
+
+        // Perform the batch insert of the TSHealth list
+        try {
+          await _tsHealthRepository.insertBatch(tsHealthList);
+          log("Batch insertion of health data completed successfully.");
+        } catch (e) {
+          log("Failed to insert health data: $e");
         }
       });
       _inertialDataService.startCollecting((inertialDataModel) {
