@@ -1,0 +1,69 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Partecipant Table
+model Partecipant {
+  partecipant_id String    @id @default(uuid())
+  created_at     DateTime  @default(now())
+  sessions       Session[]
+}
+
+// Session Table
+model Session {
+  session_id              String       @id @default(uuid())
+  partecipant_id          String
+  start_timestamp         DateTime
+  end_timestamp           DateTime
+  smartphone_model        String
+  smartphone_os_version   String
+  smartwatch_model        String
+  smartwatch_os_version   String
+  partecipant             Partecipant  @relation(fields: [partecipant_id], references: [partecipant_id], onDelete: Cascade)
+  tsHealths               TSHealth[]
+  tsInertials             TSInertial[]
+}
+
+// TSHealth Table
+model TSHealth {
+  ts_health_id    String    @id @default(uuid())
+  session_id      String
+  start_timestamp DateTime
+  end_timestamp   DateTime
+  category        String
+  unit            String
+  value           String
+  session         Session   @relation(fields: [session_id], references: [session_id], onDelete: Cascade)
+}
+
+// TSInertial Table
+model TSInertial {
+  ts_inertial_id                String   @id @default(uuid())
+  session_id                    String
+  timestamp                     DateTime
+  smartphone_accelerometer_ts    DateTime
+  smartphone_accelerometer_x     Float
+  smartphone_accelerometer_y     Float
+  smartphone_accelerometer_z     Float
+  smartphone_gyroscope_ts        DateTime
+  smartphone_gyroscope_x         Float
+  smartphone_gyroscope_y         Float
+  smartphone_gyroscope_z         Float
+  smartphone_magnometer_ts       DateTime
+  smartphone_magnometer_x        Float
+  smartphone_magnometer_y        Float
+  smartphone_magnometer_z        Float
+  session                       Session  @relation(fields: [session_id], references: [session_id], onDelete: Cascade)
+}
