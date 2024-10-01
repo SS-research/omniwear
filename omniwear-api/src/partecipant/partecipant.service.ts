@@ -15,14 +15,14 @@ export class PartecipantService {
     return await this.prisma.partecipant.findMany();
   }
 
-  async findOne(partecipantID: string) {
+  async findOne(partecipant_id: string) {
     const partecipant = await this.prisma.partecipant.findUnique({
-      where: { partecipant_id: partecipantID },
+      where: { partecipant_id },
     });
 
     if (!partecipant) {
       throw new NotFoundException(
-        `Partecipant with ID: ${partecipantID} not found`,
+        `Partecipant with ID: ${partecipant_id} not found`,
       );
     }
 
@@ -30,21 +30,21 @@ export class PartecipantService {
   }
 
   async update(
-    partecipantID: string,
+    partecipant_id: string,
     updatePartecipantDto: UpdatePartecipantDto,
   ) {
-    await this.findOne(partecipantID);
+    await this.findOne(partecipant_id);
 
     return await this.prisma.partecipant.update({
-      where: { partecipant_id: partecipantID },
+      where: { partecipant_id },
       data: updatePartecipantDto,
     });
   }
 
-  async remove(partecipantID: string) {
-    await this.findOne(partecipantID);
+  async remove(partecipant_id: string) {
+    await this.findOne(partecipant_id);
     return await this.prisma.partecipant.delete({
-      where: { partecipant_id: partecipantID },
+      where: { partecipant_id },
     });
   }
 }
