@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { TsInertialModule } from './ts-inertial/ts-inertial.module';
+import { PartecipantModule } from './partecipant/partecipant.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { TsInertialModule } from './ts-inertial/ts-inertial.module';
     }),
     PrismaModule,
     TsInertialModule,
+    PartecipantModule,
   ],
   controllers: [AppController],
 })
