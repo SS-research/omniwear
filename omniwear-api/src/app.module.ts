@@ -5,6 +5,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { TsInertialModule } from './ts-inertial/ts-inertial.module';
 import { PartecipantModule } from './partecipant/partecipant.module';
 import { SessionModule } from './session/session.module';
+import { TsHealthModule } from './ts-health/ts-health.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { SessionModule } from './session/session.module';
     TsInertialModule,
     PartecipantModule,
     SessionModule,
+    TsHealthModule,
   ],
   controllers: [AppController],
 })
