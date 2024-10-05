@@ -6,6 +6,7 @@ import { TsInertialModule } from './ts-inertial/ts-inertial.module';
 import { PartecipantModule } from './partecipant/partecipant.module';
 import { SessionModule } from './session/session.module';
 import { TsHealthModule } from './ts-health/ts-health.module';
+import { DatasetModule } from './dataset/dataset.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { TsHealthModule } from './ts-health/ts-health.module';
     PartecipantModule,
     SessionModule,
     TsHealthModule,
+    DatasetModule,
   ],
   controllers: [AppController],
 })

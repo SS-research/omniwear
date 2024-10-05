@@ -26,6 +26,13 @@ export class CreateSessionDto {
   partecipant_id: string;
 
   @ApiProperty({
+    description: 'Unique identifier for the dataset',
+    example: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
+  })
+  @IsUUID()
+  dataset_id: string;
+
+  @ApiProperty({
     description: 'The start timestamp of the session',
     example: '2024-10-02T14:48:00.000Z',
   })

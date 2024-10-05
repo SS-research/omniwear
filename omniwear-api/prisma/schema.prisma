@@ -13,6 +13,23 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Dataset {
+  dataset_id String   @id @default(uuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  inertial_features String
+  inertial_collection_frequency        Float
+  inertial_collection_duration_seconds Int
+  inertial_sleep_duration_seconds      Int
+
+  health_features          String
+  health_reading_frequency Int
+  health_reading_interval  Int
+
+  sessions Session[]
+}
+
 // Partecipant Table
 model Partecipant {
   partecipant_id String    @id @default(uuid())
@@ -24,12 +41,14 @@ model Partecipant {
 model Session {
   session_id            String       @id @default(uuid())
   partecipant_id        String
+  dataset_id            String
   start_timestamp       DateTime
   end_timestamp         DateTime
   smartphone_model      String
   smartphone_os_version String
   smartwatch_model      String
   smartwatch_os_version String
+  dataset               Dataset      @relation(fields: [dataset_id], references: [dataset_id], onDelete: Cascade)
   partecipant           Partecipant  @relation(fields: [partecipant_id], references: [partecipant_id], onDelete: Cascade)
   tsHealths             TSHealth[]
   tsInertials           TSInertial[]
