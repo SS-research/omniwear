@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:omniwear/api/api_client.dart';
 import 'package:omniwear/db/entities/partecipant.dart';
 import 'package:omniwear/db/entities/session.dart';
 import 'package:omniwear/db/entities/ts_health.dart';
@@ -18,6 +19,7 @@ class SessionService {
   final _sessionRepository = Session.getRepository();
   final _tsHealthRepository = TSHealth.getRepository();
   final _tsInertialRepository = TSInertial.getRepository();
+  final _apiClient = ApiClient();
   late String _partecipantID;
   late String _sessionID;
   late Session _session;
@@ -33,8 +35,10 @@ class SessionService {
     final partecipants = await _partecipantRepository.fetchAll();
     Partecipant partecipant;
     if (partecipants.isEmpty) {
+      log('Partecipants is empty, creating a new one...');
       partecipant = Partecipant(partecipantID: uuid.v4());
       await _partecipantRepository.insert(partecipant);
+      await _apiClient.post('/partecipant', partecipant.toMap());
     } else {
       partecipant = partecipants[0];
     }
@@ -44,14 +48,19 @@ class SessionService {
     final deviceInfoModel = await _deviceInfoService.fetchDeviceInfo();
 
     _session = Session(
-        sessionID: _sessionID,
-        partecipantID: _partecipantID,
-        startTimestamp: startTimestamp.toIso8601String(),
-        endTimestamp: endTimestamp.toIso8601String(),
-        smartphoneModel: deviceInfoModel.smartphoneModel,
-        smartphoneOsVersion: deviceInfoModel.smartphoneOsVersion);
+      sessionID: _sessionID,
+      partecipantID: _partecipantID,
+      startTimestamp: startTimestamp.toIso8601String(),
+      endTimestamp: endTimestamp.toIso8601String(),
+      smartphoneModel: deviceInfoModel.smartphoneModel,
+      smartphoneOsVersion: deviceInfoModel.smartphoneOsVersion,
+      // TODO: fetch from the smartwatch connected to the device when will be enabled
+      smartwatchModel: 'Apple Watch Series 7',
+      smartwatchOsVersion: 'watchOS 8.0',
+    );
 
     _sessionRepository.insert(_session);
+    await _apiClient.post('/session', _session.toMap());
 
     await _healthDataService.requestPermissions();
 
