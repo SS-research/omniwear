@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:omniwear/api/api_client.dart';
+import 'package:omniwear/api/socket_client.dart';
 import 'package:omniwear/db/entities/partecipant.dart';
 import 'package:omniwear/db/entities/session.dart';
 import 'package:omniwear/db/entities/ts_health.dart';
@@ -20,6 +21,7 @@ class SessionService {
   final _tsHealthRepository = TSHealth.getRepository();
   final _tsInertialRepository = TSInertial.getRepository();
   final _apiClient = ApiClient();
+  final _socket = SocketClient();
   late String _partecipantID;
   late String _sessionID;
   late Session _session;
@@ -64,6 +66,8 @@ class SessionService {
 
     await _healthDataService.requestPermissions();
 
+    _socket.connect();
+
     final startDuration = startTimestamp.difference(DateTime.now());
     Timer(startDuration, () {
       log("Starting a new session...");
@@ -73,8 +77,8 @@ class SessionService {
                   tsHealthId: uuid.v4(),
                   sessionId: _sessionID,
                   startTimestamp:
-                      healthDataModel.startTimestamp.toIso8601String(),
-                  endTimestamp: healthDataModel.endTimestamp.toIso8601String(),
+                      healthDataModel.startTimestamp.toUtc().toIso8601String(),
+                  endTimestamp: healthDataModel.endTimestamp.toUtc().toIso8601String(),
                   category: healthDataModel.category,
                   unit: healthDataModel.unit,
                   value: healthDataModel.value.toString(),
@@ -84,13 +88,16 @@ class SessionService {
         // Perform the batch insert of the TSHealth list
         try {
           await _tsHealthRepository.insertBatch(tsHealthList);
+          _socket.emit('ts-health', {
+            "tsHealths": tsHealthList.map((tsHealth) => tsHealth.toMap()).toList(),
+          });
           log("Batch insertion of health data completed successfully.");
         } catch (e) {
           log("Failed to insert health data: $e");
         }
       });
       _inertialDataService.startCollecting((inertialDataModel) {
-        _tsInertialRepository.insert(TSInertial(
+        final tsInertial = TSInertial(
           tsInertialId: uuid.v4(),
           sessionId: _sessionID,
           timestamp: inertialDataModel.timestamp.toIso8601String(),
@@ -111,7 +118,9 @@ class SessionService {
           smartphoneMagnometerX: inertialDataModel.smartphoneMagnometerX,
           smartphoneMagnometerY: inertialDataModel.smartphoneMagnometerY,
           smartphoneMagnometerZ: inertialDataModel.smartphoneMagnometerZ,
-        ));
+        );
+        _tsInertialRepository.insert(tsInertial);
+        _socket.emit('ts-inertial', tsInertial.toMap());
       }, (sensorName) {
         log("Error for sensor: $sensorName");
       });
@@ -127,6 +136,7 @@ class SessionService {
 
   Future<void> stopSession(DateTime endTimestamp) async {
     log("Stopping the session...");
+    _socket.disconnect();
     _healthDataService.stopStreaming();
     _inertialDataService.stopCollecting();
     _session = _session.copyWith(endTimestamp: endTimestamp.toIso8601String());
