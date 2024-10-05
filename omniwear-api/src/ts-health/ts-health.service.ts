@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@app/prisma/prisma.service';
 import { CreateTsHealthDto } from './dto/create-ts-health.dto';
 import { UpdateTsHealthDto } from './dto/update-ts-health.dto';
+import { CreateManyTsHealthDto } from './dto/create-many-ts-health.dto';
 
 @Injectable()
 export class TsHealthService {
@@ -9,6 +10,12 @@ export class TsHealthService {
 
   async create(createTsHealthDto: CreateTsHealthDto) {
     return await this.prisma.tSHealth.create({ data: createTsHealthDto });
+  }
+
+  async createMany(createManyTsHealthsDto: CreateManyTsHealthDto) {
+    return await this.prisma.tSHealth.createMany({
+      data: createManyTsHealthsDto.tsHealths,
+    });
   }
 
   async findAll() {

@@ -8,8 +8,9 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
-import { CreateTsHealthDto } from './dto/create-ts-health.dto';
 import { TsHealthService } from './ts-health.service';
+import { CreateManyTsHealthDto } from './dto/create-many-ts-health.dto';
+import { UsePipes, ValidationPipe } from '@nestjs/common';
 
 // TODO: more secure CORS
 // TODO: check if possible to set CORS global for both WebSocket and REST API
@@ -30,14 +31,15 @@ export class TsHealthGateway
     console.log(`Client disconnected: ${client.id}`);
   }
 
+  @UsePipes(new ValidationPipe())
   @SubscribeMessage('ts-health')
   async handleMessage(
-    @MessageBody() message: CreateTsHealthDto,
+    @MessageBody() message: CreateManyTsHealthDto,
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
     try {
-      const tsHealthRecord = await this.tsHealthService.create(message);
-      console.log('Created TsHealth Record:', tsHealthRecord);
+      const tsHealthRecord = await this.tsHealthService.createMany(message);
+      console.log('Created TsHealth Records:', tsHealthRecord);
 
       // Send back the created record only to the specific client
       client.emit('ts-health-response', tsHealthRecord);
