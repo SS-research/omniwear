@@ -6,3 +6,5 @@ inertialFeatures: "accelerometer,gyroscope"
 healthFeatures: "*"
 healthReadingFrequency: 4
 healthReadingInterval: 1800000
+
+baseUrl: "http://192.168.1.30:3000"

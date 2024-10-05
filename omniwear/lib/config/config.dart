@@ -12,6 +12,8 @@ class Config {
   final int healthReadingFrequency;
   final int healthReadingInterval;
 
+  final String baseUrl;
+
   Config({
     required this.inertialCollectionFrequency,
     required this.inertialCollectionDurationSeconds,
@@ -20,6 +22,7 @@ class Config {
     required this.healthFeatures,
     required this.healthReadingFrequency,
     required this.healthReadingInterval,
+    required this.baseUrl,
   });
 
   // Static method to load Config from a YAML file
@@ -37,6 +40,7 @@ class Config {
       healthFeatures: yamlMap['healthFeatures'] ?? "",
       healthReadingFrequency: yamlMap['healthReadingFrequency'],
       healthReadingInterval: yamlMap['healthReadingInterval'],
+      baseUrl: yamlMap['baseUrl'],
     );
   }
 }
