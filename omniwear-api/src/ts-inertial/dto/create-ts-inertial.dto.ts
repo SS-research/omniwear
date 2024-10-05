@@ -28,90 +28,102 @@ export class CreateTsInertialDto {
   @Type(() => Date)
   timestamp: Date;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Timestamp for smartphone accelerometer data.',
     example: '2024-10-02T00:13:53.940Z',
   })
   @IsDate()
   @Type(() => Date)
-  smartphone_accelerometer_ts: Date;
+  @IsOptional()
+  smartphone_accelerometer_timestamp?: Date;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'X-axis data from the smartphone accelerometer.',
     example: 0.98,
   })
   @IsNumber()
-  smartphone_accelerometer_x: number;
+  @IsOptional()
+  smartphone_accelerometer_x?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Y-axis data from the smartphone accelerometer.',
     example: -0.23,
   })
   @IsNumber()
-  smartphone_accelerometer_y: number;
+  @IsOptional()
+  smartphone_accelerometer_y?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Z-axis data from the smartphone accelerometer.',
     example: 9.81,
   })
   @IsNumber()
-  smartphone_accelerometer_z: number;
+  @IsOptional()
+  smartphone_accelerometer_z?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Timestamp for smartphone gyroscope data.',
     example: '2024-10-02T00:13:53.940Z',
   })
   @IsDate()
   @Type(() => Date)
-  smartphone_gyroscope_ts: Date;
+  @IsOptional()
+  smartphone_gyroscope_timestamp?: Date;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'X-axis data from the smartphone gyroscope.',
     example: 0.12,
   })
   @IsNumber()
-  smartphone_gyroscope_x: number;
+  @IsOptional()
+  smartphone_gyroscope_x?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Y-axis data from the smartphone gyroscope.',
     example: -0.45,
   })
   @IsNumber()
-  smartphone_gyroscope_y: number;
+  @IsOptional()
+  smartphone_gyroscope_y?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Z-axis data from the smartphone gyroscope.',
     example: 0.67,
   })
   @IsNumber()
-  smartphone_gyroscope_z: number;
+  @IsOptional()
+  smartphone_gyroscope_z?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Timestamp for smartphone magnetometer data.',
     example: '2024-10-02T00:13:53.940Z',
   })
   @IsDate()
   @Type(() => Date)
-  smartphone_magnometer_ts: Date;
+  @IsOptional()
+  smartphone_magnometer_timestamp?: Date;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'X-axis data from the smartphone magnetometer.',
     example: 30.15,
   })
   @IsNumber()
-  smartphone_magnometer_x: number;
+  @IsOptional()
+  smartphone_magnometer_x?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Y-axis data from the smartphone magnetometer.',
     example: -45.23,
   })
   @IsNumber()
-  smartphone_magnometer_y: number;
+  @IsOptional()
+  smartphone_magnometer_y?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Z-axis data from the smartphone magnetometer.',
     example: 60.89,
   })
   @IsNumber()
-  smartphone_magnometer_z: number;
+  @IsOptional()
+  smartphone_magnometer_z?: number;
 }
