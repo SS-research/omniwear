@@ -10,6 +10,7 @@ import {
 import { Socket } from 'socket.io';
 import { CreateTsInertialDto } from './dto/create-ts-inertial.dto';
 import { TsInertialService } from './ts-inertial.service';
+import { UsePipes, ValidationPipe } from '@nestjs/common';
 
 // TODO: more secure cors
 // TODO: check if possible to set cors global for both websocket and rest api
@@ -30,6 +31,7 @@ export class TsInertialGateway
     console.log(`Client disconnected: ${client.id}`);
   }
 
+  @UsePipes(new ValidationPipe())
   @SubscribeMessage('ts-inertial')
   async handleMessage(
     @MessageBody() message: CreateTsInertialDto,
