@@ -47,6 +47,7 @@ dependencies:
   path: ^1.9.0
   uuid: ^4.5.0
   dio: ^5.7.0
+  socket_io_client: ^3.0.0
 
 dev_dependencies:
   flutter_test:
