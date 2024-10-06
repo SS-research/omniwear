@@ -26,8 +26,8 @@ class Config {
   });
 
   // Static method to load Config from a YAML file
-  static Future<Config> loadFromPath(String filePath) async {
-    final contents = await rootBundle.loadString('assets/config.yaml');
+  static Future<Config> loadFromPath(String path) async {
+    final contents = await rootBundle.loadString(path);
     final yamlMap = loadYaml(contents) as Map;
 
     return Config(
