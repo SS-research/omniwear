@@ -22,7 +22,7 @@ class ApiClient {
         );
 
   // GET request method
-  Future<Map<String, dynamic>?> get(
+  Future<dynamic> get(
     String url, {
     Map<String, String>? queryParams = const {},
     Map<String, String>? headers = const {},
@@ -35,7 +35,7 @@ class ApiClient {
   }
 
   // POST request method
-  Future<Map<String, dynamic>?> post(
+  Future<dynamic> post(
     String url,
     dynamic payLoad, {
     Map<String, String>? headers = const {},
@@ -48,7 +48,7 @@ class ApiClient {
   }
 
   // Unified request handler for GET and POST
-  Future<Map<String, dynamic>?> _request(
+  Future<dynamic> _request(
     Future<Response> Function() request, {
     Map<String, String>? headers,
   }) async {
@@ -59,8 +59,7 @@ class ApiClient {
       // Send the request
       final response = await request();
 
-      // Return the response data
-      return response.data as Map<String, dynamic>?;
+      return response.data;
     } on DioException catch (e) {
       log('Request failed: ${e.message}');
       log('DioException: ${e.response?.data}');
