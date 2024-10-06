@@ -1,12 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsString,
-  IsNumber,
-  IsPositive,
-  MinLength,
-  Min,
-} from 'class-validator';
+import { IsString, IsNumber, IsPositive, Min } from 'class-validator';
 
+// TODO: write better ApiProperty.description
 export class CreateDatasetDto {
   @ApiProperty({
     description: 'The frequency of inertial collection in Hz.',
@@ -42,7 +37,6 @@ export class CreateDatasetDto {
     default: 'accelerometer,gyroscope',
   })
   @IsString()
-  @MinLength(1)
   inertial_features: string = 'accelerometer,gyroscope';
 
   @ApiProperty({
@@ -52,7 +46,6 @@ export class CreateDatasetDto {
     default: '*',
   })
   @IsString()
-  @MinLength(1)
   health_features: string = '*';
 
   @ApiProperty({

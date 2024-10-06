@@ -12,7 +12,7 @@ class Config {
   final int healthReadingFrequency;
   final int healthReadingInterval;
 
-  final String baseUrl;
+  String baseUrl;
 
   Config({
     required this.inertialCollectionFrequency,
@@ -42,6 +42,23 @@ class Config {
       healthReadingInterval: yamlMap['healthReadingInterval'],
       baseUrl: yamlMap['baseUrl'],
     );
+  }
+
+  void updateBaseUrl(baseUrl) {
+    this.baseUrl = baseUrl;
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'inertialFeatures': inertialFeatures,
+      'inertialCollectionFrequency': inertialCollectionFrequency,
+      'inertialCollectionDurationSeconds': inertialCollectionDurationSeconds,
+      'inertialSleepDurationSeconds': inertialSleepDurationSeconds,
+      'healthFeatures': healthFeatures,
+      'healthReadingFrequency': healthReadingFrequency,
+      'healthReadingInterval': healthReadingInterval,
+      'baseUrl': baseUrl,
+    };
   }
 }
 

@@ -1,14 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:omniwear/screens/dataset_list_page.dart';
 import 'package:omniwear/services/session_service.dart';
 
 class StartSessionPage extends StatefulWidget {
+  final DatasetModel datasetModel;
+
+  StartSessionPage({Key? key, required this.datasetModel})
+      : super(key: ValueKey(datasetModel.datasetId));
+
   @override
   _StartSessionPageState createState() => _StartSessionPageState();
 }
 
 class _StartSessionPageState extends State<StartSessionPage> {
-  final _sessionService = SessionService();
+  late final SessionService _sessionService;
   bool _isSessionActive = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _sessionService = SessionService(datasetModel: widget.datasetModel);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,8 +77,10 @@ class _StartSessionPageState extends State<StartSessionPage> {
 
   @override
   void dispose() {
-    final endTimestamp = DateTime.now();
-    _sessionService.stopSession(endTimestamp);
+    if (_isSessionActive) {
+      final endTimestamp = DateTime.now();
+      _sessionService.stopSession(endTimestamp);
+    }
     super.dispose();
   }
 }
