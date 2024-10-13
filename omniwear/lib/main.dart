@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:omniwear/config/config_manager.dart';
+import 'package:omniwear/screens/connect_api_page.dart';
 
 import 'screens/device_info_page.dart';
 import 'screens/health_data_page.dart';
-import 'screens/start_session_page.dart';
 import 'screens/inertial_data_page.dart';
 
 void main() async {
@@ -54,8 +54,8 @@ class MyHomePage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             ElevatedButton(
-              onPressed: () => _navigateToPage(context, StartSessionPage()),
-              child: const Text('Start Session'),
+              onPressed: () => _navigateToPage(context, ConnectApiPage()),
+              child: const Text('Connect API'),
             ),
             const SizedBox(height: 16),
             ElevatedButton(

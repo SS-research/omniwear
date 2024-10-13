@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:omniwear/api/api_client.dart';
+import 'package:omniwear/api/socket_client.dart';
 import 'package:omniwear/db/entities/partecipant.dart';
 import 'package:omniwear/db/entities/session.dart';
 import 'package:omniwear/db/entities/ts_health.dart';
 import 'package:omniwear/db/entities/ts_inertial.dart';
+import 'package:omniwear/screens/dataset_list_page.dart';
 import 'package:omniwear/services/device_info_service.dart';
 import 'package:omniwear/services/health_data_service.dart';
 import 'package:omniwear/services/inertial_data_service.dart';
@@ -12,15 +15,20 @@ import 'package:uuid/uuid.dart';
 
 class SessionService {
   final _deviceInfoService = DeviceInfoService();
-  final _inertialDataService = InertialDataService();
-  final _healthDataService = HealthDataService();
+  late InertialDataService _inertialDataService;
+  late HealthDataService _healthDataService;
   final _partecipantRepository = Partecipant.getRepository();
   final _sessionRepository = Session.getRepository();
   final _tsHealthRepository = TSHealth.getRepository();
   final _tsInertialRepository = TSInertial.getRepository();
+  final _apiClient = ApiClient();
+  final _socket = SocketClient();
   late String _partecipantID;
   late String _sessionID;
   late Session _session;
+  final DatasetModel datasetModel;
+
+  SessionService({required this.datasetModel});
 
   Future<void> scheduleSession(
       DateTime startTimestamp, DateTime endTimestamp) async {
@@ -33,8 +41,10 @@ class SessionService {
     final partecipants = await _partecipantRepository.fetchAll();
     Partecipant partecipant;
     if (partecipants.isEmpty) {
+      log('Partecipants is empty, creating a new one...');
       partecipant = Partecipant(partecipantID: uuid.v4());
       await _partecipantRepository.insert(partecipant);
+      await _apiClient.post('/partecipant', partecipant.toMap());
     } else {
       partecipant = partecipants[0];
     }
@@ -44,16 +54,37 @@ class SessionService {
     final deviceInfoModel = await _deviceInfoService.fetchDeviceInfo();
 
     _session = Session(
-        sessionID: _sessionID,
-        partecipantID: _partecipantID,
-        startTimestamp: startTimestamp.toIso8601String(),
-        endTimestamp: endTimestamp.toIso8601String(),
-        smartphoneModel: deviceInfoModel.smartphoneModel,
-        smartphoneOsVersion: deviceInfoModel.smartphoneOsVersion);
+      sessionID: _sessionID,
+      partecipantID: _partecipantID,
+      startTimestamp: startTimestamp.toIso8601String(),
+      endTimestamp: endTimestamp.toIso8601String(),
+      smartphoneModel: deviceInfoModel.smartphoneModel,
+      smartphoneOsVersion: deviceInfoModel.smartphoneOsVersion,
+      // TODO: fetch from the smartwatch connected to the device when will be enabled
+      smartwatchModel: 'Apple Watch Series 7',
+      smartwatchOsVersion: 'watchOS 8.0',
+    );
 
     _sessionRepository.insert(_session);
+    // TODO: create session dto better
+    await _apiClient.post('/session', {..._session.toMap(), "dataset_id": datasetModel.datasetId});
+
+    _inertialDataService = InertialDataService(
+      inertialFeatures: datasetModel.inertialFeatures,
+      inertialCollectionDurationSeconds: datasetModel.inertialCollectionDurationSeconds,
+      inertialCollectionFrequency: datasetModel.inertialCollectionFrequency,
+      inertialSleepDurationSeconds: datasetModel.inertialSleepDurationSeconds,
+    );
+
+    _healthDataService = HealthDataService(
+      healthFeatures: datasetModel.healthFeatures,
+      healthReadingFrequency: datasetModel.healthReadingFrequency,
+      healthReadingInterval: datasetModel.healthReadingInterval,
+    );
 
     await _healthDataService.requestPermissions();
+
+    _socket.connect();
 
     final startDuration = startTimestamp.difference(DateTime.now());
     Timer(startDuration, () {
@@ -64,8 +95,8 @@ class SessionService {
                   tsHealthId: uuid.v4(),
                   sessionId: _sessionID,
                   startTimestamp:
-                      healthDataModel.startTimestamp.toIso8601String(),
-                  endTimestamp: healthDataModel.endTimestamp.toIso8601String(),
+                      healthDataModel.startTimestamp.toUtc().toIso8601String(),
+                  endTimestamp: healthDataModel.endTimestamp.toUtc().toIso8601String(),
                   category: healthDataModel.category,
                   unit: healthDataModel.unit,
                   value: healthDataModel.value.toString(),
@@ -75,34 +106,39 @@ class SessionService {
         // Perform the batch insert of the TSHealth list
         try {
           await _tsHealthRepository.insertBatch(tsHealthList);
+          _socket.emit('ts-health', {
+            "tsHealths": tsHealthList.map((tsHealth) => tsHealth.toMap()).toList(),
+          });
           log("Batch insertion of health data completed successfully.");
         } catch (e) {
           log("Failed to insert health data: $e");
         }
       });
       _inertialDataService.startCollecting((inertialDataModel) {
-        _tsInertialRepository.insert(TSInertial(
+        final tsInertial = TSInertial(
           tsInertialId: uuid.v4(),
           sessionId: _sessionID,
-          timestamp: inertialDataModel.timestamp.toIso8601String(),
+          timestamp: inertialDataModel.timestamp.toUtc().toIso8601String(),
           smartphoneAccelerometerTimestamp: inertialDataModel
               .smartphoneAccelerometerTimestamp
-              ?.toIso8601String(),
+              ?.toUtc().toIso8601String(),
           smartphoneAccelerometerX: inertialDataModel.smartphoneAccelerometerX,
           smartphoneAccelerometerY: inertialDataModel.smartphoneAccelerometerY,
           smartphoneAccelerometerZ: inertialDataModel.smartphoneAccelerometerZ,
           smartphoneGyroscopeTimestamp:
-              inertialDataModel.smartphoneGyroscopeTimestamp?.toIso8601String(),
+              inertialDataModel.smartphoneGyroscopeTimestamp?.toUtc().toIso8601String(),
           smartphoneGyroscopeX: inertialDataModel.smartphoneGyroscopeX,
           smartphoneGyroscopeY: inertialDataModel.smartphoneGyroscopeY,
           smartphoneGyroscopeZ: inertialDataModel.smartphoneGyroscopeZ,
           smartphoneMagnometerTimestamp: inertialDataModel
               .smartphoneMagnometerTimestamp
-              ?.toIso8601String(),
+              ?.toUtc().toIso8601String(),
           smartphoneMagnometerX: inertialDataModel.smartphoneMagnometerX,
           smartphoneMagnometerY: inertialDataModel.smartphoneMagnometerY,
           smartphoneMagnometerZ: inertialDataModel.smartphoneMagnometerZ,
-        ));
+        );
+        _tsInertialRepository.insert(tsInertial);
+        _socket.emit('ts-inertial', tsInertial.toMap());
       }, (sensorName) {
         log("Error for sensor: $sensorName");
       });
@@ -118,6 +154,7 @@ class SessionService {
 
   Future<void> stopSession(DateTime endTimestamp) async {
     log("Stopping the session...");
+    _socket.disconnect();
     _healthDataService.stopStreaming();
     _inertialDataService.stopCollecting();
     _session = _session.copyWith(endTimestamp: endTimestamp.toIso8601String());
