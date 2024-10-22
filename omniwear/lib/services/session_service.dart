@@ -11,14 +11,13 @@ import 'package:omniwear/screens/dataset_list_page.dart';
 import 'package:omniwear/services/device_info_service.dart';
 import 'package:omniwear/services/health_data_service.dart';
 import 'package:omniwear/services/inertial_data_service.dart';
+import 'package:omniwear/utils/get_device_id.dart';
 import 'package:uuid/uuid.dart';
 
 class SessionService {
   final _deviceInfoService = DeviceInfoService();
   late InertialDataService _inertialDataService;
   late HealthDataService _healthDataService;
-  final _partecipantRepository = Partecipant.getRepository();
-  final _sessionRepository = Session.getRepository();
   final _tsHealthRepository = TSHealth.getRepository();
   final _tsInertialRepository = TSInertial.getRepository();
   final _apiClient = ApiClient();
@@ -37,18 +36,19 @@ class SessionService {
     }
 
     log("Scheduling a new session...");
-    const uuid = Uuid();
-    final partecipants = await _partecipantRepository.fetchAll();
-    Partecipant partecipant;
-    if (partecipants.isEmpty) {
-      log('Partecipants is empty, creating a new one...');
-      partecipant = Partecipant(partecipantID: uuid.v4());
-      await _partecipantRepository.insert(partecipant);
+    final deviceId = await getDeviceId();
+    Partecipant? partecipant;
+    dynamic partecipantd =  await _apiClient.get('/partecipant/$deviceId');
+    if (partecipantd == null) {
+      log('Partecipant not registered, registering a new one...');
+      partecipant = Partecipant(partecipantID: deviceId);
       await _apiClient.post('/partecipant', partecipant.toMap());
     } else {
-      partecipant = partecipants[0];
+      log('Partecipant already registered');
+      partecipant = Partecipant.fromMap(partecipantd);
     }
     _partecipantID = partecipant.partecipantID;
+      const uuid = Uuid();
     _sessionID = uuid.v4();
 
     final deviceInfoModel = await _deviceInfoService.fetchDeviceInfo();
@@ -65,7 +65,6 @@ class SessionService {
       smartwatchOsVersion: 'watchOS 8.0',
     );
 
-    _sessionRepository.insert(_session);
     // TODO: create session dto better
     await _apiClient.post('/session', {..._session.toMap(), "dataset_id": datasetModel.datasetId});
 
@@ -158,6 +157,7 @@ class SessionService {
     _healthDataService.stopStreaming();
     _inertialDataService.stopCollecting();
     _session = _session.copyWith(endTimestamp: endTimestamp.toIso8601String());
-    _sessionRepository.update(_sessionID, _session);
+    await _apiClient.patch('/session', _session.toMap(), id: _sessionID);
+    
   }
 }
