@@ -14,6 +14,7 @@ class DatasetModel {
   final String healthFeatures;
   final int healthReadingFrequency;
   final int healthReadingInterval;
+  final String storageOption;
 
   DatasetModel({
     required this.datasetId,
@@ -26,6 +27,7 @@ class DatasetModel {
     required this.healthFeatures,
     required this.healthReadingFrequency,
     required this.healthReadingInterval,
+    required this.storageOption,
   });
 
   factory DatasetModel.fromJson(Map<String, dynamic> json) {
@@ -42,6 +44,7 @@ class DatasetModel {
       healthFeatures: json['health_features'],
       healthReadingFrequency: json['health_reading_frequency'],
       healthReadingInterval: json['health_reading_interval'],
+      storageOption: json['storage_option'],
     );
   }
 
@@ -57,6 +60,7 @@ class DatasetModel {
       'health_features': healthFeatures,
       'health_reading_frequency': healthReadingFrequency,
       'health_reading_interval': healthReadingInterval,
+      'storage_option': storageOption,
     };
   }
 }
@@ -120,6 +124,7 @@ class _DatasetListPageState extends State<DatasetListPage> {
                             Text(
                                 'Inertial Features: ${dataset.inertialFeatures}'),
                             Text('Health Features: ${dataset.healthFeatures}'),
+                            Text('Storage Option: ${dataset.storageOption}'),
                           ],
                         ),
                         isThreeLine: true,

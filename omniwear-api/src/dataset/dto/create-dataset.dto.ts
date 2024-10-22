@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsPositive, Min } from 'class-validator';
+import { IsString, IsNumber, IsPositive, Min, IsEnum } from 'class-validator';
+import { StorageOption } from './storage_option.enum';
 
 // TODO: write better ApiProperty.description
 export class CreateDatasetDto {
@@ -65,4 +66,12 @@ export class CreateDatasetDto {
   @IsNumber()
   @Min(0)
   health_reading_interval: number = 1800000;
+
+  @ApiProperty({
+    description: 'Where to save the data: LOCAL or REMOTE.',
+    example: StorageOption.REMOTE,
+    default: StorageOption.REMOTE,
+  })
+  @IsEnum(StorageOption)
+  storage_option: StorageOption = StorageOption.REMOTE;
 }

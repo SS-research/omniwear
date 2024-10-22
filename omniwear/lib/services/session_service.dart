@@ -38,7 +38,7 @@ class SessionService {
     log("Scheduling a new session...");
     final deviceId = await getDeviceId();
     Partecipant? partecipant;
-    dynamic partecipantd =  await _apiClient.get('/partecipant/$deviceId');
+    dynamic partecipantd = await _apiClient.get('/partecipant/$deviceId');
     if (partecipantd == null) {
       log('Partecipant not registered, registering a new one...');
       partecipant = Partecipant(partecipantID: deviceId);
@@ -48,7 +48,7 @@ class SessionService {
       partecipant = Partecipant.fromMap(partecipantd);
     }
     _partecipantID = partecipant.partecipantID;
-      const uuid = Uuid();
+    const uuid = Uuid();
     _sessionID = uuid.v4();
 
     final deviceInfoModel = await _deviceInfoService.fetchDeviceInfo();
@@ -66,11 +66,13 @@ class SessionService {
     );
 
     // TODO: create session dto better
-    await _apiClient.post('/session', {..._session.toMap(), "dataset_id": datasetModel.datasetId});
+    await _apiClient.post('/session',
+        {..._session.toMap(), "dataset_id": datasetModel.datasetId});
 
     _inertialDataService = InertialDataService(
       inertialFeatures: datasetModel.inertialFeatures,
-      inertialCollectionDurationSeconds: datasetModel.inertialCollectionDurationSeconds,
+      inertialCollectionDurationSeconds:
+          datasetModel.inertialCollectionDurationSeconds,
       inertialCollectionFrequency: datasetModel.inertialCollectionFrequency,
       inertialSleepDurationSeconds: datasetModel.inertialSleepDurationSeconds,
     );
@@ -88,6 +90,7 @@ class SessionService {
     final startDuration = startTimestamp.difference(DateTime.now());
     Timer(startDuration, () {
       log("Starting a new session...");
+      log("Storage option: ${datasetModel.storageOption}");
       _healthDataService.startStreaming(onData: (healthDataModels) async {
         List<TSHealth> tsHealthList = healthDataModels
             .map((healthDataModel) => TSHealth(
@@ -95,7 +98,8 @@ class SessionService {
                   sessionId: _sessionID,
                   startTimestamp:
                       healthDataModel.startTimestamp.toUtc().toIso8601String(),
-                  endTimestamp: healthDataModel.endTimestamp.toUtc().toIso8601String(),
+                  endTimestamp:
+                      healthDataModel.endTimestamp.toUtc().toIso8601String(),
                   category: healthDataModel.category,
                   unit: healthDataModel.unit,
                   value: healthDataModel.value.toString(),
@@ -104,10 +108,15 @@ class SessionService {
 
         // Perform the batch insert of the TSHealth list
         try {
-          await _tsHealthRepository.insertBatch(tsHealthList);
-          _socket.emit('ts-health', {
-            "tsHealths": tsHealthList.map((tsHealth) => tsHealth.toMap()).toList(),
-          });
+          if (datasetModel.storageOption == "LOCAL") {
+            await _tsHealthRepository.insertBatch(tsHealthList);
+          } else {
+            _socket.emit('ts-health', {
+              "tsHealths":
+                  tsHealthList.map((tsHealth) => tsHealth.toMap()).toList(),
+            });
+          }
+
           log("Batch insertion of health data completed successfully.");
         } catch (e) {
           log("Failed to insert health data: $e");
@@ -120,24 +129,31 @@ class SessionService {
           timestamp: inertialDataModel.timestamp.toUtc().toIso8601String(),
           smartphoneAccelerometerTimestamp: inertialDataModel
               .smartphoneAccelerometerTimestamp
-              ?.toUtc().toIso8601String(),
+              ?.toUtc()
+              .toIso8601String(),
           smartphoneAccelerometerX: inertialDataModel.smartphoneAccelerometerX,
           smartphoneAccelerometerY: inertialDataModel.smartphoneAccelerometerY,
           smartphoneAccelerometerZ: inertialDataModel.smartphoneAccelerometerZ,
-          smartphoneGyroscopeTimestamp:
-              inertialDataModel.smartphoneGyroscopeTimestamp?.toUtc().toIso8601String(),
+          smartphoneGyroscopeTimestamp: inertialDataModel
+              .smartphoneGyroscopeTimestamp
+              ?.toUtc()
+              .toIso8601String(),
           smartphoneGyroscopeX: inertialDataModel.smartphoneGyroscopeX,
           smartphoneGyroscopeY: inertialDataModel.smartphoneGyroscopeY,
           smartphoneGyroscopeZ: inertialDataModel.smartphoneGyroscopeZ,
           smartphoneMagnometerTimestamp: inertialDataModel
               .smartphoneMagnometerTimestamp
-              ?.toUtc().toIso8601String(),
+              ?.toUtc()
+              .toIso8601String(),
           smartphoneMagnometerX: inertialDataModel.smartphoneMagnometerX,
           smartphoneMagnometerY: inertialDataModel.smartphoneMagnometerY,
           smartphoneMagnometerZ: inertialDataModel.smartphoneMagnometerZ,
         );
-        _tsInertialRepository.insert(tsInertial);
-        _socket.emit('ts-inertial', tsInertial.toMap());
+        if (datasetModel.storageOption == "LOCAL") {
+          _tsInertialRepository.insert(tsInertial);
+        } else {
+          _socket.emit('ts-inertial', tsInertial.toMap());
+        }
       }, (sensorName) {
         log("Error for sensor: $sensorName");
       });
@@ -158,6 +174,5 @@ class SessionService {
     _inertialDataService.stopCollecting();
     _session = _session.copyWith(endTimestamp: endTimestamp.toIso8601String());
     await _apiClient.patch('/session', _session.toMap(), id: _sessionID);
-    
   }
 }
