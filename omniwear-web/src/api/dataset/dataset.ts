@@ -1,5 +1,6 @@
 import { CreateDatasetDto, TDataset, UpdateDatasetDto } from './types';
 import { RequestMethod, apiRequest } from '../apiRequest';
+import { TPaginationOptionsDto, TPaginationResponseDto } from '../pagination';
 
 const ENDPOINT = 'dataset';
 
@@ -7,8 +8,8 @@ export const createDataset = async (datasetData: CreateDatasetDto) => {
     return apiRequest<CreateDatasetDto, TDataset>(RequestMethod.POST, ENDPOINT, datasetData);
 };
 
-export const getAllDatasets = async () => {
-    return apiRequest<void, TDataset[]>(RequestMethod.GET, ENDPOINT);
+export const getAllDatasets = async (paginationOptionsDto: TPaginationOptionsDto): Promise<TPaginationResponseDto<TDataset>> => {
+    return apiRequest<void, TPaginationResponseDto<TDataset>>(RequestMethod.GET, `${ENDPOINT}?limit=${paginationOptionsDto.limit}&page=${paginationOptionsDto.page}`);
 };
 
 export const getDatasetById = async (datasetId: string) => {

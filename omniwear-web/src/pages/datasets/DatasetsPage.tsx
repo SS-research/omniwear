@@ -3,18 +3,43 @@ import HealthIcon from '@/components/icons/HealthIcon';
 import SensorIcon from '@/components/icons/SensorIcon';
 import { Button } from 'primereact/button';
 import { Column } from 'primereact/column';
-import { DataTable } from 'primereact/datatable';
+import { DataTable, DataTablePageEvent } from 'primereact/datatable';
 import { Tag } from 'primereact/tag';
 import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 export default function DatasetsPage() {
     const [datasets, setDatasets] = useState<TDataset[]>([]);
 
+    const [loading, setLoading] = useState(true);
+    
+    const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
+
+    const [totalRecords, setTotalRecords] = useState(0);
+    const limit = parseInt(searchParams.get('limit') || '6', 10);
+    const page = parseInt(searchParams.get('page') || '1', 10);
+
     useEffect(() => {
-        if (datasets.length === 0) {
-            getAllDatasets().then((data) => setDatasets(data));
-        }
-    }, []);
+        fetchDatasets();
+    }, [limit, page]);
+
+    const fetchDatasets = async () => {
+        setLoading(true);
+        const paginationOptions = { limit, page };
+        const response = await getAllDatasets(paginationOptions);
+        setDatasets(response.data);
+        setTotalRecords(response.total);
+        setLoading(false);
+    };
+
+    const onPageChange = (event: DataTablePageEvent) => {
+        const newPage = event.page! + 1;
+        const newLimit = event.rows;
+
+        setSearchParams({ page: newPage.toString(), limit: newLimit.toString() });
+    };
+
 
     const convertToCSV = (data: TDataset[]) => {
         const headers = [
@@ -69,7 +94,7 @@ export default function DatasetsPage() {
                 icon="pi pi-refresh"
                 className="shadow"
                 tooltip="Refresh"
-                onClick={() => getAllDatasets().then((data) => setDatasets(data))}
+                onClick={fetchDatasets}
             />
             <Button icon="pi pi-download" className="shadow" tooltip="Download .csv" onClick={downloadCSV}/>
         </div>
@@ -94,12 +119,17 @@ export default function DatasetsPage() {
                         columnGap: '2px',
                     }}
                     width={30}
+                    first={(page - 1) * limit}
                     resizableColumns
                     paginator
+                    totalRecords={totalRecords}
+                    lazy
+                    loading={loading}
+                    onPage={onPageChange}
                     emptyMessage="No datasets found."
                     paginatorRight={paginatorRight}
                     paginatorLeft={paginatorLeft}
-                    rows={6}
+                    rows={limit}
                 >
                     <Column field="dataset_id" header="Dataset ID" sortable />
 
@@ -185,7 +215,7 @@ export default function DatasetsPage() {
                                             tooltipOptions={{ position: 'bottom' }}
                                             severity="danger"
                                             className="shadow"
-                                            onClick={() => console.log('TO IMPLEMENT')}
+                                            onClick={() => navigate(`/dataset/${dataset.dataset_id}/ts-inertial`)}
                                         />
                                     )}
                                 {dataset.storage_option === 'REMOTE' &&
@@ -196,7 +226,7 @@ export default function DatasetsPage() {
                                             tooltipOptions={{ position: 'bottom' }}
                                             severity="danger"
                                             className="shadow"
-                                            onClick={() => console.log('TO IMPLEMENT')}
+                                            onClick={() => navigate(`/dataset/${dataset.dataset_id}/ts-health`)}
                                         />
                                     )}
                                 <Button
