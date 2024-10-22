@@ -1,6 +1,7 @@
 import 'package:omniwear/db/core/entity.dart';
 import 'package:omniwear/db/core/repository.dart';
 
+// NOTE: ad the moment Partecipant is not an active Repository
 class Partecipant implements Entity<Partecipant> {
   final String partecipantID;
   final String createdAt;

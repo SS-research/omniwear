@@ -1,6 +1,7 @@
 import 'package:omniwear/db/core/entity.dart';
 import 'package:omniwear/db/core/repository.dart';
 
+// NOTE: ad the moment Session is not an active Repository
 class Session implements Entity<Session> {
   final String sessionID;
   final String partecipantID;

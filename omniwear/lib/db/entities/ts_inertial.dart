@@ -99,8 +99,7 @@ class TSInertial implements Entity<TSInertial> {
         smartphone_magnometer_timestamp TEXT,
         smartphone_magnometer_x REAL,
         smartphone_magnometer_y REAL,
-        smartphone_magnometer_z REAL,
-        FOREIGN KEY (session_id) REFERENCES Session (session_id) ON DELETE CASCADE
+        smartphone_magnometer_z REAL
       )
     ''';
   }

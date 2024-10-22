@@ -1,7 +1,5 @@
 import 'dart:developer';
 
-import 'package:omniwear/db/entities/partecipant.dart';
-import 'package:omniwear/db/entities/session.dart';
 import 'package:omniwear/db/entities/ts_health.dart';
 import 'package:omniwear/db/entities/ts_inertial.dart';
 import 'package:sqflite/sqflite.dart';
@@ -40,8 +38,6 @@ class DBConnector {
       path,
       version: 1,
       onCreate: (db, version) async {
-        await db.execute(Partecipant.getCreateTableQuery());
-        await db.execute(Session.getCreateTableQuery());
         await db.execute(TSInertial.getCreateTableQuery());
         await db.execute(TSHealth.getCreateTableQuery());
       },
