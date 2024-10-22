@@ -47,6 +47,21 @@ class ApiClient {
     );
   }
 
+  // PATCH request method
+  Future<dynamic> patch(
+    String url,
+    dynamic payLoad, {
+    required String id, // ID to specify the resource to update
+    Map<String, String>? headers = const {},
+  }) async {
+    log('PATCH $url/$id');
+    return await _request(
+      () => _client.patch('$url/$id', data: payLoad),
+      headers: headers,
+    );
+  }
+
+
   // Unified request handler for GET and POST
   Future<dynamic> _request(
     Future<Response> Function() request, {
