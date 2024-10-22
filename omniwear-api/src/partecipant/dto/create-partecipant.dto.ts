@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsUUID, IsDate, IsOptional } from 'class-validator';
+import { IsDate, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreatePartecipantDto {
@@ -7,7 +7,7 @@ export class CreatePartecipantDto {
     description: 'Unique identifier for the participant',
     example: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
   })
-  @IsUUID()
+  @IsString()
   @IsOptional()
   partecipant_id?: string;
 

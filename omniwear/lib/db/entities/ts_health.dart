@@ -58,8 +58,7 @@ class TSHealth implements Entity<TSHealth> {
         end_timestamp TEXT,
         category TEXT,
         unit TEXT,
-        value TEXT,
-        FOREIGN KEY (session_id) REFERENCES Session (session_id) ON DELETE CASCADE
+        value TEXT
       )
     ''';
   }

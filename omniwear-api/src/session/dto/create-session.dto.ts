@@ -22,7 +22,8 @@ export class CreateSessionDto {
     description: 'Unique identifier for the participant',
     example: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
   })
-  @IsUUID()
+  @IsString()
+  @MinLength(1)
   partecipant_id: string;
 
   @ApiProperty({
