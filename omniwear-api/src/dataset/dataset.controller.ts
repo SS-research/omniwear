@@ -6,11 +6,13 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { DatasetService } from './dataset.service';
 import { CreateDatasetDto } from './dto/create-dataset.dto';
 import { UpdateDatasetDto } from './dto/update-dataset.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { PaginationOptionsDto } from '@app/shared/dto';
 
 @ApiTags('dataset')
 @Controller('dataset')
@@ -23,8 +25,8 @@ export class DatasetController {
   }
 
   @Get()
-  async findAll() {
-    return await this.datasetService.findAll();
+  async findAll(@Query() paginationOptions: PaginationOptionsDto) {
+    return await this.datasetService.findAll(paginationOptions);
   }
 
   @Get(':dataset_id')

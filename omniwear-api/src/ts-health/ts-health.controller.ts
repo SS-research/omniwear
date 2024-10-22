@@ -6,11 +6,13 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { TsHealthService } from './ts-health.service';
 import { CreateTsHealthDto } from './dto/create-ts-health.dto';
 import { UpdateTsHealthDto } from './dto/update-ts-health.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { PaginationOptionsDto } from '@app/shared/dto';
 
 @ApiTags('ts-health')
 @Controller('ts-health')
@@ -23,8 +25,8 @@ export class TsHealthController {
   }
 
   @Get()
-  async findAll() {
-    return await this.tsHealthService.findAll();
+  async findAll(@Query() paginationOptions: PaginationOptionsDto) {
+    return await this.tsHealthService.findAll(paginationOptions);
   }
 
   @Get(':ts_health_id')
@@ -43,5 +45,16 @@ export class TsHealthController {
   @Delete(':ts_health_id')
   async remove(@Param('ts_health_id') ts_health_id: string) {
     return await this.tsHealthService.remove(ts_health_id);
+  }
+
+  @Get('dataset/:dataset_id')
+  async findByDatasetId(
+    @Param('dataset_id') dataset_id: string,
+    @Query() paginationOptions: PaginationOptionsDto,
+  ) {
+    return await this.tsHealthService.findByDatasetId(
+      dataset_id,
+      paginationOptions,
+    );
   }
 }

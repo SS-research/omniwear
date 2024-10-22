@@ -3,6 +3,8 @@ import { PrismaService } from '@app/prisma/prisma.service';
 import { CreateTsHealthDto } from './dto/create-ts-health.dto';
 import { UpdateTsHealthDto } from './dto/update-ts-health.dto';
 import { CreateManyTsHealthDto } from './dto/create-many-ts-health.dto';
+import { PaginationOptionsDto, PaginationResponseDto } from '@app/shared/dto';
+import { TSHealth } from '@prisma/client';
 
 @Injectable()
 export class TsHealthService {
@@ -18,8 +20,54 @@ export class TsHealthService {
     });
   }
 
-  async findAll() {
-    return await this.prisma.tSHealth.findMany();
+  async findAll(paginationOptions: PaginationOptionsDto) {
+    const { limit, page } = paginationOptions;
+    const skip = (page - 1) * limit;
+
+    const [result, total] = await this.prisma.$transaction([
+      this.prisma.tSHealth.findMany({
+        take: limit,
+        skip,
+      }),
+      this.prisma.tSHealth.count(),
+    ]);
+
+    return new PaginationResponseDto<TSHealth>({
+      data: result,
+      total,
+      page,
+      lastPage: Math.ceil(total / limit),
+    });
+  }
+
+  async findByDatasetId(
+    datasetId: string,
+    paginationOptions: PaginationOptionsDto,
+  ) {
+    const { limit, page } = paginationOptions;
+    const skip = (page - 1) * limit;
+
+    const [result, total] = await this.prisma.$transaction([
+      this.prisma.tSHealth.findMany({
+        where: {
+          session: { dataset_id: datasetId },
+        },
+        take: limit,
+        skip,
+      }),
+      this.prisma.tSHealth.count({
+        where: {
+          session: { dataset_id: datasetId },
+        },
+      }),
+    ]);
+
+    return new PaginationResponseDto<TSHealth>({
+      data: result,
+      total,
+      page,
+      lastPage: Math.ceil(total / limit),
+    });
   }
 
   async findOne(ts_health_id: string) {

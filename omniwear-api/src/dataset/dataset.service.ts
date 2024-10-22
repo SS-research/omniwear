@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateDatasetDto } from './dto/create-dataset.dto';
 import { UpdateDatasetDto } from './dto/update-dataset.dto';
 import { PrismaService } from '@app/prisma/prisma.service';
+import { PaginationOptionsDto, PaginationResponseDto } from '@app/shared/dto';
+import { Dataset } from '@prisma/client';
 
 @Injectable()
 export class DatasetService {
@@ -11,8 +13,24 @@ export class DatasetService {
     return await this.prisma.dataset.create({ data: createDatasetDto });
   }
 
-  async findAll() {
-    return await this.prisma.dataset.findMany();
+  async findAll(paginationOptions: PaginationOptionsDto) {
+    const { limit, page } = paginationOptions;
+    const skip = (page - 1) * limit;
+
+    const [result, total] = await this.prisma.$transaction([
+      this.prisma.dataset.findMany({
+        take: limit,
+        skip,
+      }),
+      this.prisma.dataset.count(),
+    ]);
+
+    return new PaginationResponseDto<Dataset>({
+      data: result,
+      total,
+      page,
+      lastPage: Math.ceil(total / limit),
+    });
   }
 
   async findOne(dataset_id: string) {

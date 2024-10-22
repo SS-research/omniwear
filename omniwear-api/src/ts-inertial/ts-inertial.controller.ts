@@ -6,11 +6,13 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { TsInertialService } from './ts-inertial.service';
 import { CreateTsInertialDto } from './dto/create-ts-inertial.dto';
 import { UpdateTsInertialDto } from './dto/update-ts-inertial.dto';
 import { ApiTags } from '@nestjs/swagger';
+import { PaginationOptionsDto } from '@app/shared/dto';
 
 @ApiTags('ts-inertial')
 @Controller('ts-inertial')
@@ -23,8 +25,8 @@ export class TsInertialController {
   }
 
   @Get()
-  async findAll() {
-    return await this.tsInertialService.findAll();
+  async findAll(@Query() paginationOptions: PaginationOptionsDto) {
+    return await this.tsInertialService.findAll(paginationOptions);
   }
 
   @Get(':ts_inertial_id')
@@ -46,5 +48,16 @@ export class TsInertialController {
   @Delete(':ts_inertial_id')
   async remove(@Param('ts_inertial_id') ts_inertial_id: string) {
     return await this.tsInertialService.remove(ts_inertial_id);
+  }
+
+  @Get('dataset/:dataset_id')
+  async findByDatasetId(
+    @Param('dataset_id') dataset_id: string,
+    @Query() paginationOptions: PaginationOptionsDto,
+  ) {
+    return await this.tsInertialService.findByDatasetId(
+      dataset_id,
+      paginationOptions,
+    );
   }
 }

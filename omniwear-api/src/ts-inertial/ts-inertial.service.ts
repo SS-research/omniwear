@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTsInertialDto } from './dto/create-ts-inertial.dto';
 import { PrismaService } from '@app/prisma/prisma.service';
 import { UpdateTsInertialDto } from './dto/update-ts-inertial.dto'; // Assuming you have this DTO defined
+import { PaginationOptionsDto, PaginationResponseDto } from '@app/shared/dto';
+import { TSInertial } from '@prisma/client';
 
 @Injectable()
 export class TsInertialService {
@@ -11,8 +13,54 @@ export class TsInertialService {
     return await this.prisma.tSInertial.create({ data: createTsInertialDto });
   }
 
-  async findAll() {
-    return await this.prisma.tSInertial.findMany();
+  async findAll(paginationOptions: PaginationOptionsDto) {
+    const { limit, page } = paginationOptions;
+    const skip = (page - 1) * limit;
+
+    const [result, total] = await this.prisma.$transaction([
+      this.prisma.tSInertial.findMany({
+        take: limit,
+        skip,
+      }),
+      this.prisma.tSInertial.count(),
+    ]);
+
+    return new PaginationResponseDto<TSInertial>({
+      data: result,
+      total,
+      page,
+      lastPage: Math.ceil(total / limit),
+    });
+  }
+
+  async findByDatasetId(
+    datasetId: string,
+    paginationOptions: PaginationOptionsDto,
+  ) {
+    const { limit, page } = paginationOptions;
+    const skip = (page - 1) * limit;
+
+    const [result, total] = await this.prisma.$transaction([
+      this.prisma.tSInertial.findMany({
+        where: {
+          session: { dataset_id: datasetId },
+        },
+        take: limit,
+        skip,
+      }),
+      this.prisma.tSInertial.count({
+        where: {
+          session: { dataset_id: datasetId },
+        },
+      }),
+    ]);
+
+    return new PaginationResponseDto<TSInertial>({
+      data: result,
+      total,
+      page,
+      lastPage: Math.ceil(total / limit),
+    });
   }
 
   async findOne(ts_inertial_id: string) {
