@@ -12,6 +12,8 @@ class Config {
   final int healthReadingFrequency;
   final int healthReadingInterval;
 
+  final String storageOption;
+
   String baseUrl;
 
   Config({
@@ -22,6 +24,7 @@ class Config {
     required this.healthFeatures,
     required this.healthReadingFrequency,
     required this.healthReadingInterval,
+    required this.storageOption,
     required this.baseUrl,
   });
 
@@ -40,6 +43,7 @@ class Config {
       healthFeatures: yamlMap['healthFeatures'] ?? "",
       healthReadingFrequency: yamlMap['healthReadingFrequency'],
       healthReadingInterval: yamlMap['healthReadingInterval'],
+      storageOption: yamlMap['storageOption'],
       baseUrl: yamlMap['baseUrl'],
     );
   }
@@ -57,6 +61,7 @@ class Config {
       'healthFeatures': healthFeatures,
       'healthReadingFrequency': healthReadingFrequency,
       'healthReadingInterval': healthReadingInterval,
+      'storageOption': storageOption,
       'baseUrl': baseUrl,
     };
   }
