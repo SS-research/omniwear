@@ -40,7 +40,7 @@ function LoginPage() {
         accessToken: tokenData.accessToken,
         role: tokenData.role,
       });
-      navigate("/home");
+      navigate("/dataset");
     } catch (error) {
       setLoginFailed(true);
       setTimeout(() => {

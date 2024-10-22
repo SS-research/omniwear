@@ -49,7 +49,7 @@
   --highlight-bg: #258900;
   --highlight-text-color: rgba(255, 255, 255, 0.87);
   color-scheme: dark;
-  background-color: rgb(50,50,50);
+  background-color: var(--surface-a);
 }
 
 @font-face {

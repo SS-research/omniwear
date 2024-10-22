@@ -5,6 +5,7 @@ export default {
     extend: {
       backgroundColor: {
         'primary': "#006E7B",
+        'secondary': '#FFA500',
       },
       borderColor: {
         'primary-lighter': "#4CA1A9",
