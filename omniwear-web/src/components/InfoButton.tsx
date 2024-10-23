@@ -14,6 +14,7 @@ export function InfoButton({ content }: InfoButtonProps) {
             <Button
                 icon="pi pi-info-circle"
                 className="shadow w-6 h-6"
+                type="button"
                 onClick={(e) => overlayRef.current?.toggle(e)}
             />
             <OverlayPanel ref={overlayRef} className="p-3">
