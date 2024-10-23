@@ -57,9 +57,15 @@ function LoginPage() {
         {/* Image Section */}
         <div className="flex justify-center">
           <Image
-            src="https://raw.githubusercontent.com/giuseppeambrosio97/tigr81/develop/assets/5142438-cute-baby-tigre-vettoriale.jpg"
+            src="/logo.jpeg"
             alt="POC login logo"
-            className="w-full h-auto max-w-xs md:max-w-sm lg:max-w-md"
+            style={{
+              borderRadius: "10px",
+            }}
+            className="w-full h-auto mt-5 max-w-xs md:max-w-sm lg:max-w-md"
+            pt={{
+              image: { className: "rounded-lg"}
+            }}
           />
         </div>
 
