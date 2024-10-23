@@ -11,20 +11,22 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import CreateDatasetDialogForm from './components/CreateDatasetDialogForm';
 import StorageOptionEnum from '@/api/dataset/storage_option_enum';
+import { deleteDataset } from '@/api/dataset';
+import ConfirmDialogW from '@/components/ConfirmDialogW';
 
 export default function DatasetsPage() {
     const [datasets, setDatasets] = useState<TDataset[]>([]);
-
     const [loading, setLoading] = useState(true);
-
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
-
     const [totalRecords, setTotalRecords] = useState(0);
     const limit = parseInt(searchParams.get('limit') || '6', 10);
     const page = parseInt(searchParams.get('page') || '1', 10);
-
     const { showToast } = useToast();
+
+    // State for managing ConfirmDialog
+    const [confirmDialogVisible, setConfirmDialogVisible] = useState(false);
+    const [datasetIdToDelete, setDatasetIdToDelete] = useState<string | null>(null);
 
     useEffect(() => {
         fetchDatasets();
@@ -52,6 +54,37 @@ export default function DatasetsPage() {
             });
         }
         setLoading(false);
+    };
+
+    const confirmDeleteDataset = (datasetId: string) => {
+        setDatasetIdToDelete(datasetId);
+        setConfirmDialogVisible(true);
+    };
+
+    const handleDeleteDataset = async () => {
+        if (!datasetIdToDelete) return;
+        try {
+            await deleteDataset(datasetIdToDelete);
+            setDatasets((prevDatasets) =>
+                prevDatasets.filter((dataset) => dataset.dataset_id !== datasetIdToDelete)
+            );
+            showToast({
+                severity: 'success',
+                summary: 'Success',
+                detail: 'Dataset deleted successfully!',
+                life: 3000,
+            });
+        } catch (error) {
+            showToast({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Failed to delete dataset.',
+                life: 3000,
+            });
+        } finally {
+            setConfirmDialogVisible(false);
+            setDatasetIdToDelete(null);
+        }
     };
 
     const onPageChange = (event: DataTablePageEvent) => {
@@ -86,15 +119,8 @@ export default function DatasetsPage() {
             )}
         </div>
     );
-    const paginatorRight = (
-        // <Button
-        //     icon="pi pi-plus"
-        //     className="shadow bg-primary text-white"
-        //     tooltip="Create a new dataset"
-        //     tooltipOptions={{ position: 'left' }}
-        // />
-        <CreateDatasetDialogForm onSubmit={createDataset} />
-    );
+
+    const paginatorRight = <CreateDatasetDialogForm onSubmit={createDataset} />;
 
     return (
         <div className="w-full h-full overflow-y-auto scrollbar max-h-[80%]">
@@ -119,48 +145,53 @@ export default function DatasetsPage() {
                     rows={limit}
                 >
                     <Column field="dataset_id" header="Dataset ID" sortable />
-
                     <Column
                         field="inertial_collection_frequency"
                         header="Inertial Collection Frequency"
                         bodyClassName="text-center"
+                        sortable
                     />
                     <Column
                         field="inertial_collection_duration_seconds"
                         header="Inertial Collection Duration Seconds"
                         bodyClassName="text-center"
+                        sortable
                     />
                     <Column
                         field="inertial_sleep_duration_seconds"
                         header="Inertial Sleep Duration Seconds"
                         bodyClassName="text-center"
+                        sortable
                     />
                     <Column
                         field="inertial_features"
                         header="Inertial Features"
                         bodyClassName="text-center"
+                        sortable
                     />
-
                     <Column
                         field="health_features"
                         header="Health Features"
                         bodyClassName="text-center"
+                        sortable
                     />
                     <Column
                         field="health_reading_frequency"
                         header="Health Reading Frequency"
                         bodyClassName="text-center"
+                        sortable
                     />
                     <Column
                         field="health_reading_interval"
                         header="Health Reading Interval"
                         bodyClassName="text-center"
+                        sortable
                     />
-
                     <Column
                         field="storage_option"
                         header="Storage Option"
                         bodyClassName="text-center"
+                        sortable
                         body={(dataset: TDataset) => (
                             <Tag
                                 value={dataset.storage_option}
@@ -168,18 +199,18 @@ export default function DatasetsPage() {
                             />
                         )}
                     />
-
                     <Column
                         field="created_at"
                         header="Created At"
                         bodyClassName="text-center"
+                        sortable
                     />
                     <Column
                         field="updated_at"
                         header="Updated At"
                         bodyClassName="text-center"
+                        sortable
                     />
-
                     <Column
                         bodyStyle={{ minWidth: '18rem' }}
                         body={(dataset: TDataset) => (
@@ -218,7 +249,7 @@ export default function DatasetsPage() {
                                     className="shadow"
                                     tooltip="Delete"
                                     tooltipOptions={{ position: 'bottom' }}
-                                    onClick={() => console.log('TO IMPLEMENT')}
+                                    onClick={() => confirmDeleteDataset(dataset.dataset_id)}
                                 />
                             </div>
                         )}
@@ -226,6 +257,14 @@ export default function DatasetsPage() {
                     />
                 </DataTable>
             </div>
+            {/* Render the custom ConfirmDialogW component */}
+            <ConfirmDialogW
+                visible={confirmDialogVisible}
+                message="Are you sure you want to delete this dataset?"
+                header="Confirm Deletion"
+                onAccept={handleDeleteDataset}
+                onReject={() => setConfirmDialogVisible(false)}
+            />
         </div>
     );
 }
