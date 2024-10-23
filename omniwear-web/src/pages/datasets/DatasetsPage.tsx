@@ -25,9 +25,7 @@ export default function DatasetsPage() {
     const { showToast } = useToast();
 
     useEffect(() => {
-        if (datasets.length === 0) {
-            fetchDatasets();
-        }
+        fetchDatasets();
     }, [limit, page]);
 
     const fetchDatasets = async () => {
@@ -89,7 +87,7 @@ export default function DatasetsPage() {
     const paginatorRight = (
         <Button
             icon="pi pi-plus"
-            className="shadow bg-primary"
+            className="shadow bg-primary text-white"
             tooltip="Create a new dataset"
             tooltipOptions={{ position: 'left' }}
         />
@@ -105,7 +103,6 @@ export default function DatasetsPage() {
                     tableStyle={{
                         columnGap: '2px',
                     }}
-                    width={30}
                     first={(page - 1) * limit}
                     resizableColumns
                     paginator
