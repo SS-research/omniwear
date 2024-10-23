@@ -1,6 +1,8 @@
 import { getAllDatasets, TDataset } from '@/api/dataset';
 import HealthIcon from '@/components/icons/HealthIcon';
 import SensorIcon from '@/components/icons/SensorIcon';
+import { useToast } from '@/components/ToastContext';
+import { downloadCSV } from '@/helpers/downloadCSV';
 import { Button } from 'primereact/button';
 import { Column } from 'primereact/column';
 import { DataTable, DataTablePageEvent } from 'primereact/datatable';
@@ -12,7 +14,7 @@ export default function DatasetsPage() {
     const [datasets, setDatasets] = useState<TDataset[]>([]);
 
     const [loading, setLoading] = useState(true);
-    
+
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
 
@@ -20,72 +22,42 @@ export default function DatasetsPage() {
     const limit = parseInt(searchParams.get('limit') || '6', 10);
     const page = parseInt(searchParams.get('page') || '1', 10);
 
+    const { showToast } = useToast();
+
     useEffect(() => {
-        fetchDatasets();
+        if (datasets.length === 0) {
+            fetchDatasets();
+        }
     }, [limit, page]);
 
     const fetchDatasets = async () => {
         setLoading(true);
         const paginationOptions = { limit, page };
-        const response = await getAllDatasets(paginationOptions);
-        setDatasets(response.data);
-        setTotalRecords(response.total);
+        try {
+            const response = await getAllDatasets(paginationOptions);
+            setDatasets(response.data);
+            setTotalRecords(response.total);
+            showToast({
+                severity: 'info',
+                summary: 'Success',
+                detail: 'Datasets have been fetched successfully!',
+                life: 3000,
+            });
+        } catch (error) {
+            showToast({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Failed to fetch datasets.',
+                life: 3000,
+            });
+        }
         setLoading(false);
     };
 
     const onPageChange = (event: DataTablePageEvent) => {
         const newPage = event.page! + 1;
         const newLimit = event.rows;
-
         setSearchParams({ page: newPage.toString(), limit: newLimit.toString() });
-    };
-
-
-    const convertToCSV = (data: TDataset[]) => {
-        const headers = [
-            'Dataset ID',
-            'Inertial Collection Frequency',
-            'Inertial Collection Duration Seconds',
-            'Inertial Sleep Duration Seconds',
-            'Inertial Features',
-            'Health Features',
-            'Health Reading Frequency',
-            'Health Reading Interval',
-            'Storage Option',
-            'Created At',
-            'Updated At',
-        ];
-
-        const rows = data.map((dataset) => [
-            dataset.dataset_id,
-            dataset.inertial_collection_frequency,
-            dataset.inertial_collection_duration_seconds,
-            dataset.inertial_sleep_duration_seconds,
-            dataset.inertial_features,
-            dataset.health_features,
-            dataset.health_reading_frequency,
-            dataset.health_reading_interval,
-            dataset.storage_option,
-            dataset.created_at,
-            dataset.updated_at,
-        ]);
-
-        const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
-
-        return csvContent;
-    };
-
-    const downloadCSV = () => {
-        const csvData = convertToCSV(datasets);
-        const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-
-        link.href = url;
-        link.setAttribute('download', 'datasets.csv');
-        link.click();
-
-        URL.revokeObjectURL(url); // Clean up the URL object
     };
 
     const paginatorLeft = (
@@ -96,7 +68,22 @@ export default function DatasetsPage() {
                 tooltip="Refresh"
                 onClick={fetchDatasets}
             />
-            <Button icon="pi pi-download" className="shadow" tooltip="Download .csv" onClick={downloadCSV}/>
+            {datasets.length !== 0 && (
+                <Button
+                    icon="pi pi-download"
+                    className="shadow"
+                    tooltip="Download .csv"
+                    onClick={() => {
+                        downloadCSV(datasets, 'dataset.csv');
+                        showToast({
+                            severity: 'success',
+                            summary: 'Success',
+                            detail: 'Dataset .csv exported successfully',
+                            life: 3000,
+                        });
+                    }}
+                />
+            )}
         </div>
     );
     const paginatorRight = (
@@ -215,7 +202,11 @@ export default function DatasetsPage() {
                                             tooltipOptions={{ position: 'bottom' }}
                                             severity="danger"
                                             className="shadow"
-                                            onClick={() => navigate(`/dataset/${dataset.dataset_id}/ts-inertial`)}
+                                            onClick={() =>
+                                                navigate(
+                                                    `/ts-inertial/dataset/${dataset.dataset_id}`
+                                                )
+                                            }
                                         />
                                     )}
                                 {dataset.storage_option === 'REMOTE' &&
@@ -226,7 +217,9 @@ export default function DatasetsPage() {
                                             tooltipOptions={{ position: 'bottom' }}
                                             severity="danger"
                                             className="shadow"
-                                            onClick={() => navigate(`/dataset/${dataset.dataset_id}/ts-health`)}
+                                            onClick={() =>
+                                                navigate(`/ts-health/dataset/${dataset.dataset_id}`)
+                                            }
                                         />
                                     )}
                                 <Button
