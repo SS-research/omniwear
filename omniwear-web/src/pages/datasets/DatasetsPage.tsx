@@ -1,4 +1,4 @@
-import { getAllDatasets, TDataset } from '@/api/dataset';
+import { createDataset, getAllDatasets, TDataset } from '@/api/dataset';
 import HealthIcon from '@/components/icons/HealthIcon';
 import SensorIcon from '@/components/icons/SensorIcon';
 import { useToast } from '@/components/ToastContext';
@@ -9,6 +9,8 @@ import { DataTable, DataTablePageEvent } from 'primereact/datatable';
 import { Tag } from 'primereact/tag';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import CreateDatasetDialogForm from './components/CreateDatasetDialogForm';
+import StorageOptionEnum from '@/api/dataset/storage_option_enum';
 
 export default function DatasetsPage() {
     const [datasets, setDatasets] = useState<TDataset[]>([]);
@@ -85,12 +87,13 @@ export default function DatasetsPage() {
         </div>
     );
     const paginatorRight = (
-        <Button
-            icon="pi pi-plus"
-            className="shadow bg-primary text-white"
-            tooltip="Create a new dataset"
-            tooltipOptions={{ position: 'left' }}
-        />
+        // <Button
+        //     icon="pi pi-plus"
+        //     className="shadow bg-primary text-white"
+        //     tooltip="Create a new dataset"
+        //     tooltipOptions={{ position: 'left' }}
+        // />
+        <CreateDatasetDialogForm onSubmit={createDataset} />
     );
 
     return (
@@ -169,7 +172,7 @@ export default function DatasetsPage() {
                         body={(dataset: TDataset) => (
                             <Tag
                                 value={dataset.storage_option}
-                                className={`px-3 py-1 text-xs font-semibold rounded ${dataset.storage_option === 'REMOTE' ? 'bg-primary' : 'bg-secondary'}`}
+                                className={`px-3 py-1 text-xs font-semibold rounded ${dataset.storage_option === StorageOptionEnum.REMOTE ? 'bg-primary' : 'bg-secondary'}`}
                             />
                         )}
                     />
