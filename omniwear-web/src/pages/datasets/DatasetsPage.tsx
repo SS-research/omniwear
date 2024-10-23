@@ -124,51 +124,43 @@ export default function DatasetsPage() {
                         field="inertial_collection_frequency"
                         header="Inertial Collection Frequency"
                         bodyClassName="text-center"
-                        sortable
                     />
                     <Column
                         field="inertial_collection_duration_seconds"
                         header="Inertial Collection Duration Seconds"
                         bodyClassName="text-center"
-                        sortable
                     />
                     <Column
                         field="inertial_sleep_duration_seconds"
                         header="Inertial Sleep Duration Seconds"
                         bodyClassName="text-center"
-                        sortable
                     />
                     <Column
                         field="inertial_features"
                         header="Inertial Features"
                         bodyClassName="text-center"
-                        sortable
                     />
 
                     <Column
                         field="health_features"
                         header="Health Features"
                         bodyClassName="text-center"
-                        sortable
                     />
                     <Column
                         field="health_reading_frequency"
                         header="Health Reading Frequency"
                         bodyClassName="text-center"
-                        sortable
                     />
                     <Column
                         field="health_reading_interval"
                         header="Health Reading Interval"
                         bodyClassName="text-center"
-                        sortable
                     />
 
                     <Column
                         field="storage_option"
                         header="Storage Option"
                         bodyClassName="text-center"
-                        sortable
                         body={(dataset: TDataset) => (
                             <Tag
                                 value={dataset.storage_option}
@@ -181,13 +173,11 @@ export default function DatasetsPage() {
                         field="created_at"
                         header="Created At"
                         bodyClassName="text-center"
-                        sortable
                     />
                     <Column
                         field="updated_at"
                         header="Updated At"
                         bodyClassName="text-center"
-                        sortable
                     />
 
                     <Column
