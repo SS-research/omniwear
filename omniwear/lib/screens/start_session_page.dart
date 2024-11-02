@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:omniwear/screens/dataset_list_page.dart';
+import 'package:omniwear/services/data_transport/websocket_transport.dart';
 import 'package:omniwear/services/session_service.dart';
 
 class StartSessionPage extends StatefulWidget {
@@ -19,7 +20,10 @@ class _StartSessionPageState extends State<StartSessionPage> {
   @override
   void initState() {
     super.initState();
-    _sessionService = SessionService(datasetModel: widget.datasetModel);
+    _sessionService = SessionService(
+      datasetModel: widget.datasetModel,
+      dataTransport: WebSocketTransport(),
+    );
   }
 
   @override
