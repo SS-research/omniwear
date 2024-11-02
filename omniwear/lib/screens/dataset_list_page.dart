@@ -85,7 +85,7 @@ class _DatasetListPageState extends State<DatasetListPage> {
     try {
       final response = await ApiClient().get('/dataset');
       setState(() {
-        datasets = (response as List)
+        datasets = (response["data"] as List)
             .map((data) => DatasetModel.fromJson(data))
             .toList();
         isLoading = false;
