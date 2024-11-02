@@ -4,6 +4,7 @@ import { PrismaService } from '@app/prisma/prisma.service';
 import { UpdateTsInertialDto } from './dto/update-ts-inertial.dto'; // Assuming you have this DTO defined
 import { PaginationOptionsDto, PaginationResponseDto } from '@app/shared/dto';
 import { TSInertial } from '@prisma/client';
+import { CreateManyTsInertialDto } from './dto/create-many-ts-inertial.dto';
 
 @Injectable()
 export class TsInertialService {
@@ -11,6 +12,12 @@ export class TsInertialService {
 
   async create(createTsInertialDto: CreateTsInertialDto) {
     return await this.prisma.tSInertial.create({ data: createTsInertialDto });
+  }
+
+  async createMany(createManyTsInertialDto: CreateManyTsInertialDto) {
+    return await this.prisma.tSInertial.createMany({
+      data: createManyTsInertialDto.data,
+    });
   }
 
   async findAll(paginationOptions: PaginationOptionsDto) {

@@ -112,7 +112,7 @@ class SessionService {
             await _tsHealthRepository.insertBatch(tsHealthList);
           } else {
             _socket.emit('ts-health', {
-              "tsHealths":
+              "data":
                   tsHealthList.map((tsHealth) => tsHealth.toMap()).toList(),
             });
           }

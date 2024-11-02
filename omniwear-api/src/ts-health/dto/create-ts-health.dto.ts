@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsUUID, IsString, IsDate } from 'class-validator';
+import { IsUUID, IsString, IsDate, IsOptional } from 'class-validator';
 
 export class CreateTsHealthDto {
   @ApiPropertyOptional({
@@ -9,6 +9,7 @@ export class CreateTsHealthDto {
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
   @IsUUID()
+  @IsOptional()
   ts_health_id?: string;
 
   @ApiProperty({
