@@ -36,11 +36,13 @@ class HealthDataModel {
 class HealthDataService {
   final Health _health = Health();
   final List<HealthDataType> _healthDataTypes;
-  Timer? _streamingTimer;
 
   // Use config values or default to specified values
   final int _healthReadingFrequency;
   final int _healthReadingInterval;
+
+  // Subscription for the periodic stream
+  StreamSubscription<List<HealthDataModel>>? _streamSubscription;
 
   // Constructor using values from ConfigManager or defaults
   HealthDataService({
@@ -112,6 +114,7 @@ class HealthDataService {
   /// @return [Future<bool>] - True if successful (no data types provided or
   ///                          authorization was granted), false otherwise.
   Future<bool> requestPermissions() async {
+    log("Health data request permissions.");
     // For the edge case where no dat
     if (_healthDataTypes.isEmpty) {
       return true;
@@ -156,30 +159,38 @@ class HealthDataService {
   void startStreaming({
     required Function(List<HealthDataModel>) onData,
   }) {
+    log("Health data streaming started.");
     if (_healthDataTypes.isEmpty) {
       log("No health features selected, streaming not started!");
       return;
     }
     stopStreaming(); // Stop any existing streaming
 
-    _streamingTimer = Timer.periodic(
-      Duration(seconds: _healthReadingFrequency),
-      (timer) async {
-        final data =
-            await fetchHealthData(intervalInSeconds: _healthReadingInterval);
-        log("Health data received: ${data.length} data points", level: 0);
-        onData(data);
-      },
-    );
+    // Create a periodic stream that fetches health data at the specified frequency
+    _streamSubscription =
+        Stream.periodic(Duration(seconds: _healthReadingFrequency))
+            .asyncMap((_) async {
+      final data =
+          await fetchHealthData(intervalInSeconds: _healthReadingInterval);
+      log("Health data received: ${data.length} data points", level: 0);
+      return data;
+    }).listen((data) {
+      onData(data); // Pass data to the listener
+    });
   }
 
   // Stop streaming health data
   void stopStreaming() {
-    if(_healthDataTypes.isEmpty) {
+    if (_healthDataTypes.isEmpty) {
       log("No health features selected, streaming not stopped!");
       return;
     }
-    _streamingTimer?.cancel();
-    _streamingTimer = null;
+    if (_streamSubscription != null) {
+      _streamSubscription!.cancel();
+      _streamSubscription = null;
+      log("Health data streaming stopped.");
+    } else {
+      log("No active health data streaming to stop.");
+    }
   }
 }
