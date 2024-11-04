@@ -58,6 +58,7 @@ class InertialDataService {
   final List<StreamSubscription<dynamic>> _streamSubscriptions = [];
   final Duration _inertialCollectionDuration;
   final Duration _inertialSleepDuration;
+  Duration get _batchDuration => _getDynamicBufferTime();
   late final Duration _sensorInterval;
   final List<String> _inertialFeatures;
 
@@ -82,7 +83,31 @@ class InertialDataService {
         _inertialSleepDuration = Duration(
             seconds: inertialSleepDurationSeconds ??
                 ConfigManager.instance.config.inertialSleepDurationSeconds),
-        _inertialFeatures = _parseInertialFeatures(inertialFeatures ?? ConfigManager.instance.config.inertialFeatures);
+        _inertialFeatures = _parseInertialFeatures(
+            inertialFeatures ?? ConfigManager.instance.config.inertialFeatures);
+
+  Duration _getDynamicBufferTime() {
+    const minBufferTime = Duration(
+        milliseconds:
+            500); // Adjusted minimum to avoid extremely high HTTP frequency
+    const maxBufferTime = Duration(seconds: 5); // Defined maximum buffer time
+
+    // Calculate base buffer time by clamping the sampling interval * 10 within min and max limits
+    final baseBufferTimeMs = (_sensorInterval.inMilliseconds * 10)
+        .clamp(minBufferTime.inMilliseconds, maxBufferTime.inMilliseconds);
+
+    // Adjustment factor is calculated based on sampling period in seconds, clamped to reasonable range
+    final adjustmentFactor =
+        (1 + (_sensorInterval.inMilliseconds / 1000).clamp(0.5, 2.0));
+
+    // Calculate the final buffer time and convert to Duration, ensuring it is within min/max bounds
+    final adjustedBufferTimeMs = (baseBufferTimeMs * adjustmentFactor)
+        .clamp(minBufferTime.inMilliseconds, maxBufferTime.inMilliseconds)
+        .round();
+
+    // Return as Duration
+    return Duration(milliseconds: adjustedBufferTimeMs);
+  }
 
   static List<String> _parseInertialFeatures(String? inertialFeatures) {
     final validFeatures = ['accelerometer', 'gyroscope', 'magnetometer'];
@@ -108,8 +133,8 @@ class InertialDataService {
   }
 
   // Starts collecting sensor data
-  void startCollecting(
-      void Function(InertialDataModel) onData, void Function(String) onError) {
+  void startCollecting(void Function(List<InertialDataModel>) onData,
+      void Function(String) onError) {
     if (_inertialFeatures.isEmpty) {
       log("No inertial features selected, streaming not started");
       return;
@@ -126,7 +151,7 @@ class InertialDataService {
   }
 
   void stopCollecting() {
-    if(_inertialFeatures.isEmpty) {
+    if (_inertialFeatures.isEmpty) {
       log("No inertial features selected, streaming not stopped!");
       return;
     }
@@ -135,8 +160,8 @@ class InertialDataService {
     isCollectingNotifier.value = false;
   }
 
-  void _startSensors(
-      void Function(InertialDataModel) onData, void Function(String) onError) {
+  void _startSensors(void Function(List<InertialDataModel>) onData,
+      void Function(String) onError) {
     Stream<UserAccelerometerEvent>? accelerometerStream;
     Stream<GyroscopeEvent>? gyroscopeStream;
     Stream<MagnetometerEvent>? magnetometerStream;
@@ -179,9 +204,11 @@ class InertialDataService {
             smartphoneMagnometerZ: magEvent?.z,
           );
         },
-      ).listen((inertialData) {
+      )
+          .bufferTime(_batchDuration)
+          .listen((inertialData) {
         // Call the onData function with the aggregated data
-        log("Inertial data received...");
+        log("Inertial data received: ${inertialData.length} data points");
         onData(inertialData);
       }, onError: (e) {
         // Handle any errors
@@ -190,8 +217,8 @@ class InertialDataService {
     );
   }
 
-  void _stopAndScheduleRestart(
-      void Function(InertialDataModel) onData, void Function(String) onError) {
+  void _stopAndScheduleRestart(void Function(List<InertialDataModel>) onData,
+      void Function(String) onError) {
     _stopSensors();
     isCollectingNotifier.value = false;
     _sleepTimer = Timer(_inertialSleepDuration, () {

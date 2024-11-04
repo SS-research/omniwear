@@ -154,7 +154,7 @@ class _InertialDataPageState extends State<InertialDataPage> {
 
     _inertialDataService.startCollecting((data) {
       setState(() {
-        _inertialDataModels.add(data);
+        _inertialDataModels.addAll(data);
       });
     }, _showSensorErrorDialog);
   }

@@ -2,12 +2,14 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:omniwear/api/api_client.dart';
-import 'package:omniwear/api/socket_client.dart';
 import 'package:omniwear/db/entities/partecipant.dart';
 import 'package:omniwear/db/entities/session.dart';
 import 'package:omniwear/db/entities/ts_health.dart';
 import 'package:omniwear/db/entities/ts_inertial.dart';
 import 'package:omniwear/screens/dataset_list_page.dart';
+import 'package:omniwear/services/data_transport/data_transport.dart';
+import 'package:omniwear/services/data_transport/http_transport.dart';
+import 'package:omniwear/services/data_transport/websocket_transport.dart';
 import 'package:omniwear/services/device_info_service.dart';
 import 'package:omniwear/services/health_data_service.dart';
 import 'package:omniwear/services/inertial_data_service.dart';
@@ -21,7 +23,8 @@ class SessionService {
   final _tsHealthRepository = TSHealth.getRepository();
   final _tsInertialRepository = TSInertial.getRepository();
   final _apiClient = ApiClient();
-  final _socket = SocketClient();
+  final DataTransport healthDataTransport = HttpTransport();
+  final DataTransport inertialDataTransport = HttpTransport();
   late String _partecipantID;
   late String _sessionID;
   late Session _session;
@@ -85,7 +88,8 @@ class SessionService {
 
     await _healthDataService.requestPermissions();
 
-    _socket.connect();
+    healthDataTransport.connect();
+    inertialDataTransport.connect();
 
     final startDuration = startTimestamp.difference(DateTime.now());
     Timer(startDuration, () {
@@ -111,9 +115,8 @@ class SessionService {
           if (datasetModel.storageOption == "LOCAL") {
             await _tsHealthRepository.insertBatch(tsHealthList);
           } else {
-            _socket.emit('ts-health', {
-              "tsHealths":
-                  tsHealthList.map((tsHealth) => tsHealth.toMap()).toList(),
+            healthDataTransport.sendData('ts-health/bulk', {
+              "data": tsHealthList.map((tsHealth) => tsHealth.toMap()).toList(),
             });
           }
 
@@ -122,37 +125,46 @@ class SessionService {
           log("Failed to insert health data: $e");
         }
       });
-      _inertialDataService.startCollecting((inertialDataModel) {
-        final tsInertial = TSInertial(
-          tsInertialId: uuid.v4(),
-          sessionId: _sessionID,
-          timestamp: inertialDataModel.timestamp.toUtc().toIso8601String(),
-          smartphoneAccelerometerTimestamp: inertialDataModel
-              .smartphoneAccelerometerTimestamp
-              ?.toUtc()
-              .toIso8601String(),
-          smartphoneAccelerometerX: inertialDataModel.smartphoneAccelerometerX,
-          smartphoneAccelerometerY: inertialDataModel.smartphoneAccelerometerY,
-          smartphoneAccelerometerZ: inertialDataModel.smartphoneAccelerometerZ,
-          smartphoneGyroscopeTimestamp: inertialDataModel
-              .smartphoneGyroscopeTimestamp
-              ?.toUtc()
-              .toIso8601String(),
-          smartphoneGyroscopeX: inertialDataModel.smartphoneGyroscopeX,
-          smartphoneGyroscopeY: inertialDataModel.smartphoneGyroscopeY,
-          smartphoneGyroscopeZ: inertialDataModel.smartphoneGyroscopeZ,
-          smartphoneMagnometerTimestamp: inertialDataModel
-              .smartphoneMagnometerTimestamp
-              ?.toUtc()
-              .toIso8601String(),
-          smartphoneMagnometerX: inertialDataModel.smartphoneMagnometerX,
-          smartphoneMagnometerY: inertialDataModel.smartphoneMagnometerY,
-          smartphoneMagnometerZ: inertialDataModel.smartphoneMagnometerZ,
-        );
+      _inertialDataService.startCollecting((inertialDataModels) {
+        List<TSInertial> tsInertialList = inertialDataModels
+            .map((inertialDataModel) => TSInertial(
+                tsInertialId: uuid.v4(),
+                sessionId: _sessionID,
+                timestamp:
+                    inertialDataModel.timestamp.toUtc().toIso8601String(),
+                smartphoneAccelerometerTimestamp: inertialDataModel
+                    .smartphoneAccelerometerTimestamp
+                    ?.toUtc()
+                    .toIso8601String(),
+                smartphoneAccelerometerX:
+                    inertialDataModel.smartphoneAccelerometerX,
+                smartphoneAccelerometerY:
+                    inertialDataModel.smartphoneAccelerometerY,
+                smartphoneAccelerometerZ:
+                    inertialDataModel.smartphoneAccelerometerZ,
+                smartphoneGyroscopeTimestamp: inertialDataModel
+                    .smartphoneGyroscopeTimestamp
+                    ?.toUtc()
+                    .toIso8601String(),
+                smartphoneGyroscopeX: inertialDataModel.smartphoneGyroscopeX,
+                smartphoneGyroscopeY: inertialDataModel.smartphoneGyroscopeY,
+                smartphoneGyroscopeZ: inertialDataModel.smartphoneGyroscopeZ,
+                smartphoneMagnometerTimestamp: inertialDataModel
+                    .smartphoneMagnometerTimestamp
+                    ?.toUtc()
+                    .toIso8601String(),
+                smartphoneMagnometerX: inertialDataModel.smartphoneMagnometerX,
+                smartphoneMagnometerY: inertialDataModel.smartphoneMagnometerY,
+                smartphoneMagnometerZ: inertialDataModel.smartphoneMagnometerZ))
+            .toList();
+
         if (datasetModel.storageOption == "LOCAL") {
-          _tsInertialRepository.insert(tsInertial);
+          _tsInertialRepository.insertBatch(tsInertialList);
         } else {
-          _socket.emit('ts-inertial', tsInertial.toMap());
+          inertialDataTransport.sendData('ts-inertial/bulk', {
+            "data":
+                tsInertialList.map((tsInertial) => tsInertial.toMap()).toList(),
+          });
         }
       }, (sensorName) {
         log("Error for sensor: $sensorName");
@@ -169,7 +181,8 @@ class SessionService {
 
   Future<void> stopSession(DateTime endTimestamp) async {
     log("Stopping the session...");
-    _socket.disconnect();
+    inertialDataTransport.disconnect();
+    healthDataTransport.disconnect();
     _healthDataService.stopStreaming();
     _inertialDataService.stopCollecting();
     _session = _session.copyWith(endTimestamp: endTimestamp.toIso8601String());

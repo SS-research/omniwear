@@ -13,6 +13,7 @@ import { CreateTsHealthDto } from './dto/create-ts-health.dto';
 import { UpdateTsHealthDto } from './dto/update-ts-health.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { PaginationOptionsDto } from '@app/shared/dto';
+import { CreateManyTsHealthDto } from './dto/create-many-ts-health.dto';
 
 @ApiTags('ts-health')
 @Controller('ts-health')
@@ -22,6 +23,11 @@ export class TsHealthController {
   @Post()
   async create(@Body() createTsHealthDto: CreateTsHealthDto) {
     return await this.tsHealthService.create(createTsHealthDto);
+  }
+
+  @Post('/bulk')
+  async createBulk(@Body() createManyTsHealthDto: CreateManyTsHealthDto) {
+    return await this.tsHealthService.createMany(createManyTsHealthDto);
   }
 
   @Get()

@@ -13,6 +13,7 @@ import { CreateTsInertialDto } from './dto/create-ts-inertial.dto';
 import { UpdateTsInertialDto } from './dto/update-ts-inertial.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { PaginationOptionsDto } from '@app/shared/dto';
+import { CreateManyTsInertialDto } from './dto/create-many-ts-inertial.dto';
 
 @ApiTags('ts-inertial')
 @Controller('ts-inertial')
@@ -22,6 +23,11 @@ export class TsInertialController {
   @Post()
   async create(@Body() createTsInertialDto: CreateTsInertialDto) {
     return await this.tsInertialService.create(createTsInertialDto);
+  }
+
+  @Post('/bulk')
+  async createBulk(@Body() createManyTsInertialDto: CreateManyTsInertialDto) {
+    return await this.tsInertialService.createMany(createManyTsInertialDto);
   }
 
   @Get()

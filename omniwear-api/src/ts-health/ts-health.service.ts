@@ -16,7 +16,7 @@ export class TsHealthService {
 
   async createMany(createManyTsHealthsDto: CreateManyTsHealthDto) {
     return await this.prisma.tSHealth.createMany({
-      data: createManyTsHealthsDto.tsHealths,
+      data: createManyTsHealthsDto.data,
     });
   }
 

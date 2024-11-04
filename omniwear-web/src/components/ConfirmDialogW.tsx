@@ -14,7 +14,7 @@ export default function ConfirmDialogW({
     visible,
     message,
     header,
-    icon = "pi pi-exclamation-triangle",
+    icon = 'pi pi-exclamation-triangle',
     onAccept,
     onReject,
 }: ConfirmationDialogProps) {
@@ -31,6 +31,12 @@ export default function ConfirmDialogW({
             pt={{
                 footer: {
                     className: 'flex justify-end gap-3',
+                },
+                acceptButton: {
+                    root: { className: 'px-2 py-1' },
+                },
+                rejectButton: {
+                    root: { className: 'px-2 py-1' },
                 },
             }}
         />
