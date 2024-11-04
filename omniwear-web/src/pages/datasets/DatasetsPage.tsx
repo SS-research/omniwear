@@ -120,7 +120,15 @@ export default function DatasetsPage() {
         </div>
     );
 
-    const paginatorRight = <CreateDatasetDialogForm onSubmit={createDataset} />;
+    const paginatorRight = (
+        <CreateDatasetDialogForm
+            onSubmit={async (data) => {
+                const created = await createDataset(data);
+                await fetchDatasets();
+                return created;
+            }}
+        />
+    );
 
     return (
         <div className="w-full h-full overflow-y-auto scrollbar max-h-[80%]">
