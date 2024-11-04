@@ -8,6 +8,7 @@ import 'package:omniwear/db/entities/ts_health.dart';
 import 'package:omniwear/db/entities/ts_inertial.dart';
 import 'package:omniwear/screens/dataset_list_page.dart';
 import 'package:omniwear/services/data_transport/data_transport.dart';
+import 'package:omniwear/services/data_transport/http_transport.dart';
 import 'package:omniwear/services/data_transport/websocket_transport.dart';
 import 'package:omniwear/services/device_info_service.dart';
 import 'package:omniwear/services/health_data_service.dart';
@@ -22,7 +23,7 @@ class SessionService {
   final _tsHealthRepository = TSHealth.getRepository();
   final _tsInertialRepository = TSInertial.getRepository();
   final _apiClient = ApiClient(); 
-  final DataTransport healthDataTransport = WebSocketTransport();
+  final DataTransport healthDataTransport = HttpTransport();
   final DataTransport inertialDataTransport = WebSocketTransport();
   late String _partecipantID;
   late String _sessionID;
@@ -114,7 +115,7 @@ class SessionService {
           if (datasetModel.storageOption == "LOCAL") {
             await _tsHealthRepository.insertBatch(tsHealthList);
           } else {
-            healthDataTransport.sendData('ts-health', {
+            healthDataTransport.sendData('ts-health/bulk', {
               "data":
                   tsHealthList.map((tsHealth) => tsHealth.toMap()).toList(),
             });
