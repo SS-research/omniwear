@@ -22,9 +22,9 @@ class SessionService {
   late HealthDataService _healthDataService;
   final _tsHealthRepository = TSHealth.getRepository();
   final _tsInertialRepository = TSInertial.getRepository();
-  final _apiClient = ApiClient(); 
+  final _apiClient = ApiClient();
   final DataTransport healthDataTransport = HttpTransport();
-  final DataTransport inertialDataTransport = WebSocketTransport();
+  final DataTransport inertialDataTransport = HttpTransport();
   late String _partecipantID;
   late String _sessionID;
   late Session _session;
@@ -116,8 +116,7 @@ class SessionService {
             await _tsHealthRepository.insertBatch(tsHealthList);
           } else {
             healthDataTransport.sendData('ts-health/bulk', {
-              "data":
-                  tsHealthList.map((tsHealth) => tsHealth.toMap()).toList(),
+              "data": tsHealthList.map((tsHealth) => tsHealth.toMap()).toList(),
             });
           }
 
@@ -126,37 +125,46 @@ class SessionService {
           log("Failed to insert health data: $e");
         }
       });
-      _inertialDataService.startCollecting((inertialDataModel) {
-        final tsInertial = TSInertial(
-          tsInertialId: uuid.v4(),
-          sessionId: _sessionID,
-          timestamp: inertialDataModel.timestamp.toUtc().toIso8601String(),
-          smartphoneAccelerometerTimestamp: inertialDataModel
-              .smartphoneAccelerometerTimestamp
-              ?.toUtc()
-              .toIso8601String(),
-          smartphoneAccelerometerX: inertialDataModel.smartphoneAccelerometerX,
-          smartphoneAccelerometerY: inertialDataModel.smartphoneAccelerometerY,
-          smartphoneAccelerometerZ: inertialDataModel.smartphoneAccelerometerZ,
-          smartphoneGyroscopeTimestamp: inertialDataModel
-              .smartphoneGyroscopeTimestamp
-              ?.toUtc()
-              .toIso8601String(),
-          smartphoneGyroscopeX: inertialDataModel.smartphoneGyroscopeX,
-          smartphoneGyroscopeY: inertialDataModel.smartphoneGyroscopeY,
-          smartphoneGyroscopeZ: inertialDataModel.smartphoneGyroscopeZ,
-          smartphoneMagnometerTimestamp: inertialDataModel
-              .smartphoneMagnometerTimestamp
-              ?.toUtc()
-              .toIso8601String(),
-          smartphoneMagnometerX: inertialDataModel.smartphoneMagnometerX,
-          smartphoneMagnometerY: inertialDataModel.smartphoneMagnometerY,
-          smartphoneMagnometerZ: inertialDataModel.smartphoneMagnometerZ,
-        );
+      _inertialDataService.startCollecting((inertialDataModels) {
+        List<TSInertial> tsInertialList = inertialDataModels
+            .map((inertialDataModel) => TSInertial(
+                tsInertialId: uuid.v4(),
+                sessionId: _sessionID,
+                timestamp:
+                    inertialDataModel.timestamp.toUtc().toIso8601String(),
+                smartphoneAccelerometerTimestamp: inertialDataModel
+                    .smartphoneAccelerometerTimestamp
+                    ?.toUtc()
+                    .toIso8601String(),
+                smartphoneAccelerometerX:
+                    inertialDataModel.smartphoneAccelerometerX,
+                smartphoneAccelerometerY:
+                    inertialDataModel.smartphoneAccelerometerY,
+                smartphoneAccelerometerZ:
+                    inertialDataModel.smartphoneAccelerometerZ,
+                smartphoneGyroscopeTimestamp: inertialDataModel
+                    .smartphoneGyroscopeTimestamp
+                    ?.toUtc()
+                    .toIso8601String(),
+                smartphoneGyroscopeX: inertialDataModel.smartphoneGyroscopeX,
+                smartphoneGyroscopeY: inertialDataModel.smartphoneGyroscopeY,
+                smartphoneGyroscopeZ: inertialDataModel.smartphoneGyroscopeZ,
+                smartphoneMagnometerTimestamp: inertialDataModel
+                    .smartphoneMagnometerTimestamp
+                    ?.toUtc()
+                    .toIso8601String(),
+                smartphoneMagnometerX: inertialDataModel.smartphoneMagnometerX,
+                smartphoneMagnometerY: inertialDataModel.smartphoneMagnometerY,
+                smartphoneMagnometerZ: inertialDataModel.smartphoneMagnometerZ))
+            .toList();
+
         if (datasetModel.storageOption == "LOCAL") {
-          _tsInertialRepository.insert(tsInertial);
+          _tsInertialRepository.insertBatch(tsInertialList);
         } else {
-          inertialDataTransport.sendData('ts-inertial', tsInertial.toMap());
+          inertialDataTransport.sendData('ts-inertial/bulk', {
+            "data":
+                tsInertialList.map((tsInertial) => tsInertial.toMap()).toList(),
+          });
         }
       }, (sensorName) {
         log("Error for sensor: $sensorName");
