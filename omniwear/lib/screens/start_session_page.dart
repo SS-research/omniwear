@@ -21,8 +21,7 @@ class _StartSessionPageState extends State<StartSessionPage> {
   void initState() {
     super.initState();
     _sessionService = SessionService(
-      datasetModel: widget.datasetModel,
-      dataTransport: WebSocketTransport(),
+      datasetModel: widget.datasetModel
     );
   }
 

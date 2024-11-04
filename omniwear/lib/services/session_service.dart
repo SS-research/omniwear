@@ -8,6 +8,7 @@ import 'package:omniwear/db/entities/ts_health.dart';
 import 'package:omniwear/db/entities/ts_inertial.dart';
 import 'package:omniwear/screens/dataset_list_page.dart';
 import 'package:omniwear/services/data_transport/data_transport.dart';
+import 'package:omniwear/services/data_transport/websocket_transport.dart';
 import 'package:omniwear/services/device_info_service.dart';
 import 'package:omniwear/services/health_data_service.dart';
 import 'package:omniwear/services/inertial_data_service.dart';
@@ -21,13 +22,14 @@ class SessionService {
   final _tsHealthRepository = TSHealth.getRepository();
   final _tsInertialRepository = TSInertial.getRepository();
   final _apiClient = ApiClient(); 
-  final DataTransport dataTransport;
+  final DataTransport healthDataTransport = WebSocketTransport();
+  final DataTransport inertialDataTransport = WebSocketTransport();
   late String _partecipantID;
   late String _sessionID;
   late Session _session;
   final DatasetModel datasetModel;
 
-  SessionService({required this.datasetModel, required this.dataTransport});
+  SessionService({required this.datasetModel});
 
   Future<void> scheduleSession(
       DateTime startTimestamp, DateTime endTimestamp) async {
@@ -85,7 +87,8 @@ class SessionService {
 
     await _healthDataService.requestPermissions();
 
-    dataTransport.connect();
+    healthDataTransport.connect();
+    inertialDataTransport.connect();
 
     final startDuration = startTimestamp.difference(DateTime.now());
     Timer(startDuration, () {
@@ -111,7 +114,7 @@ class SessionService {
           if (datasetModel.storageOption == "LOCAL") {
             await _tsHealthRepository.insertBatch(tsHealthList);
           } else {
-            dataTransport.sendData('ts-health', {
+            healthDataTransport.sendData('ts-health', {
               "data":
                   tsHealthList.map((tsHealth) => tsHealth.toMap()).toList(),
             });
@@ -152,7 +155,7 @@ class SessionService {
         if (datasetModel.storageOption == "LOCAL") {
           _tsInertialRepository.insert(tsInertial);
         } else {
-          dataTransport.sendData('ts-inertial', tsInertial.toMap());
+          inertialDataTransport.sendData('ts-inertial', tsInertial.toMap());
         }
       }, (sensorName) {
         log("Error for sensor: $sensorName");
@@ -169,7 +172,8 @@ class SessionService {
 
   Future<void> stopSession(DateTime endTimestamp) async {
     log("Stopping the session...");
-    dataTransport.disconnect();
+    inertialDataTransport.disconnect();
+    healthDataTransport.disconnect();
     _healthDataService.stopStreaming();
     _inertialDataService.stopCollecting();
     _session = _session.copyWith(endTimestamp: endTimestamp.toIso8601String());
