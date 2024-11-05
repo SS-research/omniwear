@@ -129,6 +129,35 @@ class _DatasetListPageState extends State<DatasetListPage> {
     }
   }
 
+  Widget _buildDatasetItem(DatasetModel dataset) {
+    return Card(
+      margin: const EdgeInsets.all(10),
+      child: ListTile(
+        title: Text('Dataset ID: ${dataset.datasetId}'),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Created At: ${dataset.createdAt}'),
+            Text('Updated At: ${dataset.updatedAt}'),
+            Text('Inertial Features: ${dataset.inertialFeatures}'),
+            Text('Health Features: ${dataset.healthFeatures}'),
+            Text('Storage Option: ${dataset.storageOption}'),
+          ],
+        ),
+        isThreeLine: true,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => StartSessionPage(
+                  key: ValueKey(dataset.datasetId), datasetModel: dataset),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -173,37 +202,7 @@ class _DatasetListPageState extends State<DatasetListPage> {
                         );
                       }
 
-                      // Render dataset item cards
-                      final dataset = datasets[index];
-                      return Card(
-                        margin: const EdgeInsets.all(10),
-                        child: ListTile(
-                          title: Text('Dataset ID: ${dataset.datasetId}'),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Created At: ${dataset.createdAt}'),
-                              Text('Updated At: ${dataset.updatedAt}'),
-                              Text(
-                                  'Inertial Features: ${dataset.inertialFeatures}'),
-                              Text(
-                                  'Health Features: ${dataset.healthFeatures}'),
-                              Text('Storage Option: ${dataset.storageOption}'),
-                            ],
-                          ),
-                          isThreeLine: true,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => StartSessionPage(
-                                    key: ValueKey(dataset.datasetId),
-                                    datasetModel: dataset),
-                              ),
-                            );
-                          },
-                        ),
-                      );
+                      return _buildDatasetItem(datasets[index]);
                     },
                   ),
                 ),
