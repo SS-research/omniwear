@@ -130,32 +130,122 @@ class _DatasetListPageState extends State<DatasetListPage> {
   }
 
   Widget _buildDatasetItem(DatasetModel dataset) {
-    return Card(
-      margin: const EdgeInsets.all(10),
-      child: ListTile(
-        title: Text('Dataset ID: ${dataset.datasetId}'),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Created At: ${dataset.createdAt}'),
-            Text('Updated At: ${dataset.updatedAt}'),
-            Text('Inertial Features: ${dataset.inertialFeatures}'),
-            Text('Health Features: ${dataset.healthFeatures}'),
-            Text('Storage Option: ${dataset.storageOption}'),
-          ],
-        ),
-        isThreeLine: true,
+    return GestureDetector(
         onTap: () {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => StartSessionPage(
-                  key: ValueKey(dataset.datasetId), datasetModel: dataset),
+                key: ValueKey(dataset.datasetId),
+                datasetModel: dataset,
+              ),
             ),
           );
         },
-      ),
-    );
+        child: Card(
+          margin: const EdgeInsets.all(10),
+          elevation: 4,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Dataset ID: ${dataset.datasetId}',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 18),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+                Container(
+                  padding: const EdgeInsets.all(4.0),
+                  decoration: BoxDecoration(
+                    color: dataset.storageOption == 'REMOTE'
+                        ? const Color(0xFF006E7B)
+                        : const Color(0xFFFFA500),
+                    borderRadius: BorderRadius.circular(4.0),
+                  ),
+                  child: Text(
+                    dataset.storageOption,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Card(
+                  elevation: 0.3,
+                  margin: const EdgeInsets.all(1.0),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Inertial Features ${dataset.inertialFeatures}',
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Inertial Collection Frequency: ${dataset.inertialCollectionFrequency}Hz',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        Text(
+                          'Inertial Collection Duration: ${dataset.inertialCollectionDurationSeconds}sec',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        Text(
+                          'Inertial Sleep Duration: ${dataset.inertialSleepDurationSeconds}sec',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Card(
+                  elevation: 0.3,
+                  margin: const EdgeInsets.all(1.0),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Health Features: ${dataset.healthFeatures}',
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Health Reading Frequency: ${dataset.healthReadingFrequency}sec',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        Text(
+                          'Health Reading Interval: ${dataset.healthReadingInterval}min',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Created At: ${dataset.createdAt}',
+                  style: const TextStyle(color: Colors.grey),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ],
+            ),
+          ),
+        ));
   }
 
   @override
@@ -201,7 +291,6 @@ class _DatasetListPageState extends State<DatasetListPage> {
                           child: Center(child: CircularProgressIndicator()),
                         );
                       }
-
                       return _buildDatasetItem(datasets[index]);
                     },
                   ),
