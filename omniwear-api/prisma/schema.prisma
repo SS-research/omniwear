@@ -18,12 +18,12 @@ model Dataset {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  inertial_features                    String
+  inertial_features                    String?
   inertial_collection_frequency        Float
   inertial_collection_duration_seconds Int
   inertial_sleep_duration_seconds      Int
 
-  health_features          String
+  health_features          String?
   health_reading_frequency Int
   health_reading_interval  Int
 

@@ -4,9 +4,9 @@ type CreateDatasetDto = {
     inertial_collection_frequency: number;
     inertial_collection_duration_seconds: number;
     inertial_sleep_duration_seconds: number;
-    inertial_features: string;
+    inertial_features?: string;
 
-    health_features: string;
+    health_features?: string;
     health_reading_frequency: number;
     health_reading_interval: number;
 
