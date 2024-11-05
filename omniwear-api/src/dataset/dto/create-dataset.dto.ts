@@ -1,5 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsPositive, Min, IsEnum } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsString,
+  IsNumber,
+  IsPositive,
+  Min,
+  IsEnum,
+  IsOptional,
+} from 'class-validator';
 import { StorageOption } from './storage_option.enum';
 
 // TODO: write better ApiProperty.description
@@ -31,22 +38,24 @@ export class CreateDatasetDto {
   @Min(0)
   inertial_sleep_duration_seconds: number = 5;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description:
       'The types of inertial features collected, such as accelerometer, gyroscope.',
     example: 'accelerometer,gyroscope',
     default: 'accelerometer,gyroscope',
   })
   @IsString()
+  @IsOptional()
   inertial_features: string = 'accelerometer,gyroscope';
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description:
       'The health features collected (e.g., heart rate, steps). Use "*" for all features.',
     example: '*',
     default: '*',
   })
   @IsString()
+  @IsOptional()
   health_features: string = '*';
 
   @ApiProperty({

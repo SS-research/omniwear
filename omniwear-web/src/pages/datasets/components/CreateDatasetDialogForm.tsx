@@ -16,8 +16,8 @@ const schema = z.object({
     inertial_collection_frequency: z.number().positive(),
     inertial_collection_duration_seconds: z.number().min(0),
     inertial_sleep_duration_seconds: z.number().min(0),
-    inertial_features: z.string().min(1, 'Inertial features are required'),
-    health_features: z.string().min(1, 'Health features are required'),
+    inertial_features: z.string().optional(),
+    health_features: z.string().optional(),
     health_reading_frequency: z.number().positive(),
     health_reading_interval: z.number().min(0),
     storage_option: z.enum([StorageOptionEnum.REMOTE, StorageOptionEnum.LOCAL], {
