@@ -13,22 +13,39 @@ export default function TSInertialsPage() {
     const navigate = useNavigate();
     const { showToast } = useToast();
 
-    const [inertialData, setInertialData] = useState<TTsInertial[]>([]);
+    const [inertialDataCache, setInertialDataCache] = useState<{
+        [page: number]: TTsInertial[];
+    } | null>(null);
     const [loading, setLoading] = useState(true);
     const [totalRecords, setTotalRecords] = useState(0);
     const [limit, setLimit] = useState(6);
     const [page, setPage] = useState(1);
 
     useEffect(() => {
-        fetchInertialData();
+        fetchInertialDataFromCache();
     }, [datasetId, limit, page]);
+
+    const fetchInertialDataFromCache = async () => {
+        if (inertialDataCache !== null && inertialDataCache[page]) {
+            return;
+        }
+        await fetchInertialData();
+    };
+
+    const refreshInertialData = async () => {
+        setInertialDataCache(null);
+        await fetchInertialData();
+    };
 
     const fetchInertialData = async () => {
         setLoading(true);
         const paginationOptions = { limit, page };
         try {
             const response = await getAllTsInertialsByDatasetId(datasetId!, paginationOptions);
-            setInertialData(response.data);
+            setInertialDataCache((prevCache) => ({
+                ...prevCache,
+                [page]: response.data,
+            }));
             setTotalRecords(response.total);
             showToast({
                 severity: 'info',
@@ -56,22 +73,21 @@ export default function TSInertialsPage() {
         navigate(-1);
     };
 
-
     const paginatorLeft = (
         <div className="flex gap-2">
             <Button
                 icon="pi pi-refresh"
                 className="shadow"
                 tooltip="Refresh"
-                onClick={fetchInertialData}
+                onClick={refreshInertialData}
             />
-            {inertialData.length !== 0 && (
+            {inertialDataCache !== null && (
                 <Button
                     icon="pi pi-download"
                     className="shadow"
                     tooltip="Download .csv"
                     onClick={() => {
-                        downloadCSV(inertialData, 'ts-inertials.csv');
+                        downloadCSV(Object.values(inertialDataCache).flat(), 'ts-inertials.csv');
                         showToast({
                             severity: 'success',
                             summary: 'Success',
@@ -97,7 +113,7 @@ export default function TSInertialsPage() {
             <h3 className="mt-1 text-center text-2xl">Inertial Data for Dataset {datasetId}</h3>
             <div className="card">
                 <DataTable
-                    value={inertialData}
+                    value={inertialDataCache !== null ? inertialDataCache[page] : []}
                     paginator
                     scrollable
                     tableStyle={{
