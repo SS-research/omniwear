@@ -15,13 +15,13 @@ import { deleteDataset } from '@/api/dataset';
 import ConfirmDialogW from '@/components/ConfirmDialogW';
 
 export default function DatasetsPage() {
-    const [datasets, setDatasets] = useState<TDataset[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
     const [totalRecords, setTotalRecords] = useState(0);
     const limit = parseInt(searchParams.get('limit') || '6', 10);
     const page = parseInt(searchParams.get('page') || '1', 10);
+    const [datasetCache, setDatasetCache] = useState<{ [page: number]: TDataset[] } | null>(null);
     const { showToast } = useToast();
 
     // State for managing ConfirmDialog
@@ -29,15 +29,30 @@ export default function DatasetsPage() {
     const [datasetIdToDelete, setDatasetIdToDelete] = useState<string | null>(null);
 
     useEffect(() => {
-        fetchDatasets();
+        fetchDatasetsFromCache();
     }, [limit, page]);
+
+    const fetchDatasetsFromCache = async () => {
+        if (datasetCache !== null && datasetCache[page]) {
+            return;
+        }
+        await fetchDatasets();
+    }
+
+    const refreshDatasets = async () => {
+        setDatasetCache(null);
+        await fetchDatasets();
+    }
 
     const fetchDatasets = async () => {
         setLoading(true);
         const paginationOptions = { limit, page };
         try {
             const response = await getAllDatasets(paginationOptions);
-            setDatasets(response.data);
+            setDatasetCache((prevCache) => ({
+                ...prevCache,
+                [page]: response.data,
+            }));
             setTotalRecords(response.total);
             showToast({
                 severity: 'info',
@@ -65,9 +80,7 @@ export default function DatasetsPage() {
         if (!datasetIdToDelete) return;
         try {
             await deleteDataset(datasetIdToDelete);
-            setDatasets((prevDatasets) =>
-                prevDatasets.filter((dataset) => dataset.dataset_id !== datasetIdToDelete)
-            );
+            await refreshDatasets();
             showToast({
                 severity: 'success',
                 summary: 'Success',
@@ -99,15 +112,15 @@ export default function DatasetsPage() {
                 icon="pi pi-refresh"
                 className="shadow"
                 tooltip="Refresh"
-                onClick={fetchDatasets}
+                onClick={refreshDatasets}
             />
-            {datasets.length !== 0 && (
+            {datasetCache !== null && (
                 <Button
                     icon="pi pi-download"
                     className="shadow"
                     tooltip="Download .csv"
                     onClick={() => {
-                        downloadCSV(datasets, 'dataset.csv');
+                        downloadCSV(Object.values(datasetCache).flat(), 'dataset.csv');
                         showToast({
                             severity: 'success',
                             summary: 'Success',
@@ -124,7 +137,7 @@ export default function DatasetsPage() {
         <CreateDatasetDialogForm
             onSubmit={async (data) => {
                 const created = await createDataset(data);
-                await fetchDatasets();
+                await refreshDatasets();
                 return created;
             }}
         />
@@ -135,7 +148,7 @@ export default function DatasetsPage() {
             <h2 className="mt-1 text-center text-2xl">Datasets</h2>
             <div className="card">
                 <DataTable
-                    value={datasets}
+                    value={datasetCache !== null ? datasetCache![page] : []}
                     scrollable
                     tableStyle={{
                         columnGap: '2px',
