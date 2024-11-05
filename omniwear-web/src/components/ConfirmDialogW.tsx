@@ -33,10 +33,10 @@ export default function ConfirmDialogW({
                     className: 'flex justify-end gap-3',
                 },
                 acceptButton: {
-                    root: { className: 'px-2 py-1' },
+                    root: { className: 'px-2 py-1 bg-primary text-white' },
                 },
                 rejectButton: {
-                    root: { className: 'px-2 py-1' },
+                    root: { className: 'px-2 py-1 bg-secondary text-white' },
                 },
             }}
         />

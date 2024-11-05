@@ -12,22 +12,39 @@ export default function TSHealthsPage() {
     const navigate = useNavigate();
     const { showToast } = useToast();
 
-    const [healthData, setHealthData] = useState<TTsHealth[]>([]);
+    const [healthDataCache, setHealthDataCache] = useState<{
+        [page: number]: TTsHealth[];
+    } | null>(null);
     const [loading, setLoading] = useState(true);
     const [totalRecords, setTotalRecords] = useState(0);
     const [limit, setLimit] = useState(6);
     const [page, setPage] = useState(1);
 
     useEffect(() => {
-        fetchHealthData();
+        fetchHealthDataFromCache();
     }, [datasetId, limit, page]);
+
+    const fetchHealthDataFromCache = async () => {
+        if (healthDataCache !== null && healthDataCache[page]) {
+            return;
+        }
+        await fetchHealthData();
+    };
+
+    const refreshHealthData = async () => {
+        setHealthDataCache(null);
+        await fetchHealthData();
+    };
 
     const fetchHealthData = async () => {
         setLoading(true);
         const paginationOptions = { limit, page };
         try {
             const response = await getAllTsHealthsByDatasetId(datasetId!, paginationOptions);
-            setHealthData(response.data);
+            setHealthDataCache((prevCache) => ({
+                ...prevCache,
+                [page]: response.data,
+            }));
             setTotalRecords(response.total);
             showToast({
                 severity: 'info',
@@ -61,15 +78,15 @@ export default function TSHealthsPage() {
                 icon="pi pi-refresh"
                 className="shadow"
                 tooltip="Refresh"
-                onClick={fetchHealthData}
+                onClick={refreshHealthData}
             />
-            {healthData.length !== 0 && (
+            {healthDataCache !== null && (
                 <Button
                     icon="pi pi-download"
                     className="shadow"
                     tooltip="Download .csv"
                     onClick={() => {
-                        downloadCSV(healthData, 'ts-healths.csv');
+                        downloadCSV(Object.values(healthDataCache).flat(), 'ts-healths.csv');
                         showToast({
                             severity: 'success',
                             summary: 'Success',
@@ -95,7 +112,7 @@ export default function TSHealthsPage() {
             <h3 className="mt-1 text-center text-2xl">Health Data for Dataset {datasetId}</h3>
             <div className="card">
                 <DataTable
-                    value={healthData}
+                    value={healthDataCache !== null ? healthDataCache[page] : []}
                     paginator
                     scrollable
                     tableStyle={{
@@ -127,14 +144,18 @@ export default function TSHealthsPage() {
                     <Column
                         field="start_timestamp"
                         header="Start Timestamp"
-                        body={(rowData: TTsHealth) => new Date(rowData.start_timestamp).toLocaleString()}
+                        body={(rowData: TTsHealth) =>
+                            new Date(rowData.start_timestamp).toLocaleString()
+                        }
                         bodyClassName="text-center"
                         sortable
                     />
                     <Column
                         field="end_timestamp"
                         header="End Timestamp"
-                        body={(rowData: TTsHealth) => new Date(rowData.end_timestamp).toLocaleString()}
+                        body={(rowData: TTsHealth) =>
+                            new Date(rowData.end_timestamp).toLocaleString()
+                        }
                         bodyClassName="text-center"
                         sortable
                     />

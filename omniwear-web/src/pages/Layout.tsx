@@ -8,7 +8,7 @@ export default function Layout() {
       {/* Header Section */}
       <header className="text-white flex justify-between items-center font-bold text-2xl p-3 bg-primary mb-2">
         <SidebarMenu />
-        <h2>OmniWear Web</h2>
+        <h2>OmniWear Cloud</h2>
         <ThemeSwitcher />
       </header>
 
