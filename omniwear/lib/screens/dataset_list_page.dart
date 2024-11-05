@@ -75,25 +75,56 @@ class _DatasetListPageState extends State<DatasetListPage> {
   bool isLoading = true;
   String errorMessage = '';
 
+  // Pagination variables
+  int page = 1;
+  final int limit = 10;
+  bool hasMore = true;
+  bool isLoadingMore = false;
+
   @override
   void initState() {
     super.initState();
     fetchDatasets();
   }
 
-  Future<void> fetchDatasets() async {
-    try {
-      final response = await ApiClient().get('/dataset');
+  Future<void> fetchDatasets({bool loadMore = false}) async {
+    if (loadMore) {
       setState(() {
-        datasets = (response["data"] as List)
-            .map((data) => DatasetModel.fromJson(data))
-            .toList();
-        isLoading = false;
+        isLoadingMore = true;
+      });
+    } else {
+      setState(() {
+        isLoading = true;
+        errorMessage = '';
+      });
+    }
+    try {
+      final response = await ApiClient().get('/dataset', queryParams: {
+        'limit': limit,
+        'page': page,
+      });
+
+      final List<DatasetModel> fetchedDatasets = (response["data"] as List)
+          .map((data) => DatasetModel.fromJson(data))
+          .toList();
+
+      setState(() {
+        if (loadMore) {
+          datasets.addAll(fetchedDatasets);
+          isLoadingMore = false;
+        } else {
+          datasets = fetchedDatasets;
+          isLoading = false;
+        }
+        // Check if there are more items to load
+        hasMore = response["page"] < response["lastPage"];
+        if (hasMore) page += 1;
       });
     } catch (error) {
       setState(() {
         errorMessage = 'Failed to load datasets: $error';
         isLoading = false;
+        isLoadingMore = false;
       });
     }
   }
@@ -108,40 +139,73 @@ class _DatasetListPageState extends State<DatasetListPage> {
           ? const Center(child: CircularProgressIndicator())
           : errorMessage.isNotEmpty
               ? Center(child: Text(errorMessage))
-              : ListView.builder(
-                  itemCount: datasets.length,
-                  itemBuilder: (context, index) {
-                    final dataset = datasets[index];
-                    return Card(
-                      margin: const EdgeInsets.all(10),
-                      child: ListTile(
-                        title: Text('Dataset ID: ${dataset.datasetId}'),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Created At: ${dataset.createdAt}'),
-                            Text('Updated At: ${dataset.updatedAt}'),
-                            Text(
-                                'Inertial Features: ${dataset.inertialFeatures}'),
-                            Text('Health Features: ${dataset.healthFeatures}'),
-                            Text('Storage Option: ${dataset.storageOption}'),
-                          ],
-                        ),
-                        isThreeLine: true,
-                        onTap: () {
-                          // Handle the tap event, e.g., navigate to another page
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => StartSessionPage(
-                                  key: ValueKey(dataset.datasetId),
-                                  datasetModel: dataset),
+              : NotificationListener<ScrollNotification>(
+                  onNotification: (ScrollNotification scrollInfo) {
+                    // Trigger loading more data when the user is close to the bottom
+                    if (!isLoadingMore &&
+                        hasMore &&
+                        scrollInfo.metrics.pixels >=
+                            scrollInfo.metrics.maxScrollExtent) {
+                      fetchDatasets(loadMore: true);
+                    }
+                    return false;
+                  },
+                  child: ListView.builder(
+                    itemCount: datasets.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == datasets.length) {
+                        // Show "All data loaded" message if there's no more data
+                        if (!hasMore) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Center(
+                              child: Text(
+                                'All data loaded',
+                                style: TextStyle(color: Colors.grey),
+                              ),
                             ),
                           );
-                        },
-                      ),
-                    );
-                  },
+                        }
+                        // Show the loading spinner if data is still being fetched
+                        return const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+
+                      // Render dataset item cards
+                      final dataset = datasets[index];
+                      return Card(
+                        margin: const EdgeInsets.all(10),
+                        child: ListTile(
+                          title: Text('Dataset ID: ${dataset.datasetId}'),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Created At: ${dataset.createdAt}'),
+                              Text('Updated At: ${dataset.updatedAt}'),
+                              Text(
+                                  'Inertial Features: ${dataset.inertialFeatures}'),
+                              Text(
+                                  'Health Features: ${dataset.healthFeatures}'),
+                              Text('Storage Option: ${dataset.storageOption}'),
+                            ],
+                          ),
+                          isThreeLine: true,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => StartSessionPage(
+                                    key: ValueKey(dataset.datasetId),
+                                    datasetModel: dataset),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
                 ),
     );
   }

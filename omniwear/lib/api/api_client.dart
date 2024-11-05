@@ -24,7 +24,7 @@ class ApiClient {
   // GET request method
   Future<dynamic> get(
     String url, {
-    Map<String, String>? queryParams = const {},
+    Map<String, dynamic>? queryParams = const {},
     Map<String, String>? headers = const {},
   }) async {
     log('GET $url');
