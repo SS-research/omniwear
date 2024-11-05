@@ -157,7 +157,7 @@ class _DatasetListPageState extends State<DatasetListPage> {
                         // Show "All data loaded" message if there's no more data
                         if (!hasMore) {
                           return const Padding(
-                            padding: EdgeInsets.all(16.0),
+                            padding: EdgeInsets.all(8.0),
                             child: Center(
                               child: Text(
                                 'All data loaded',
@@ -168,7 +168,7 @@ class _DatasetListPageState extends State<DatasetListPage> {
                         }
                         // Show the loading spinner if data is still being fetched
                         return const Padding(
-                          padding: EdgeInsets.all(16.0),
+                          padding: EdgeInsets.all(8.0),
                           child: Center(child: CircularProgressIndicator()),
                         );
                       }
