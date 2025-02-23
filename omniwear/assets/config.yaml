@@ -1,0 +1,10 @@
+inertialCollectionFrequency: 10
+inertialCollectionDurationSeconds: 5
+inertialSleepDurationSeconds: 5
+inertialFeatures: "accelerometer,gyroscope"
+
+healthFeatures: "*"
+healthReadingFrequency: 4
+healthReadingInterval: 1800000
+
+baseUrl: "http://localhost:3000"
