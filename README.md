@@ -6,4 +6,4 @@ For a more detailed description of the protocol, see the official [PDF document]
 
 ## acknowledgements
 
-The framework was inspired by [@simranss](https://github.com/simranss)'s original cross-platform [work](https://github.com/simranss/my_fit/).
+The framework is inspired by [@simranss](https://github.com/simranss)'s original cross-platform [work](https://github.com/simranss/my_fit/).
